@@ -62,6 +62,10 @@ jobs:
             --recording tests/fixtures/connectors/fed_h41_release/recording.json \
             --output build/fed-h41-release
           openmacrostate validate build/fed-h41-release
+          openmacrostate audit accounting build/fed-h41-release \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --json
       - name: Build distributions
         run: python -m build
       - name: Smoke-test the built wheel outside the checkout
@@ -86,6 +90,10 @@ jobs:
             --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/fed_h41_release/recording.json" \
             --output wheel-h41
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" validate wheel-h41
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" audit accounting wheel-h41 \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --json
           test -f wheel-demo/snapshot.json
           test -f wheel-demo/scores.json
           test -f wheel-sofr/collection.json

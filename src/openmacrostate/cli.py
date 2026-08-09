@@ -17,6 +17,7 @@ from openmacrostate.connectors import (
     list_builtin_connectors,
 )
 from openmacrostate.resources import bundled_example
+from openmacrostate.runtime.accounting import audit_accounting
 from openmacrostate.runtime.case import CaseEvaluation, evaluate_case, score_case
 from openmacrostate.runtime.connectors import run_connector
 from openmacrostate.runtime.http import LiveHttpTransport, RecordedHttpTransport
@@ -101,6 +102,18 @@ def _parser() -> argparse.ArgumentParser:
         "--online", action="store_true", help="explicitly permit one allowlisted HTTPS request"
     )
     capture.add_argument("--output", type=Path, required=True)
+
+    audit = subparsers.add_parser(
+        "audit", help="run deterministic, read-only experimental audits over eligible evidence"
+    )
+    audit_commands = audit.add_subparsers(dest="audit_command", required=True)
+    accounting = audit_commands.add_parser(
+        "accounting", help="check a fixed accounting rule without writing derived observations"
+    )
+    accounting.add_argument("case_dir", type=Path)
+    accounting.add_argument("--rule", required=True)
+    accounting.add_argument("--observed-at", required=True)
+    accounting.add_argument("--json", action="store_true", dest="as_json")
     return parser
 
 
@@ -115,6 +128,18 @@ def _human_summary(evaluation: CaseEvaluation) -> str:
         f"predictions={summary['accepted_predictions']} accepted/"
         f"{summary['rejected_predictions']} rejected | "
         f"research_checksums={summary['verified_research_files']} verified"
+    )
+
+
+def _human_accounting_summary(report: Mapping[str, Any]) -> str:
+    passed = sum(bool(check["passed"]) for check in report["checks"])
+    total = len(report["checks"])
+    status = "PASS" if report["passed"] else "FAIL"
+    return (
+        f"{status} {report['rule_id']} | case={report['case_id']} | "
+        f"observed_at={report['observed_at']} | "
+        f"residual={report['derived']['balance_sheet_residual']} {report['unit']} | "
+        f"tolerance=1 | checks={passed}/{total}"
     )
 
 
@@ -284,6 +309,18 @@ def _write_demo(
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.command == "audit":
+            evaluation = evaluate_case(args.case_dir)
+            report = audit_accounting(
+                evaluation,
+                rule_id=args.rule,
+                observed_at=args.observed_at,
+            )
+            if args.as_json:
+                print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+            else:
+                print(_human_accounting_summary(report))
+            return 0 if report["passed"] else 2
         if args.command == "connector":
             if args.connector_command == "list":
                 connectors_data = list_builtin_connectors()

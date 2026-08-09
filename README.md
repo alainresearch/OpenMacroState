@@ -3,7 +3,7 @@
 [![CI](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml/badge.svg)](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml)
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue.svg)](https://www.python.org/)
 [![Code/docs: Apache-2.0](https://img.shields.io/badge/code%20%26%20docs-Apache--2.0-blue.svg)](LICENSE)
-[![Pre-release: v0.1.0a4](https://img.shields.io/badge/pre--release-v0.1.0a4-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a4)
+[![Pre-release: v0.1.0a5](https://img.shields.io/badge/pre--release-v0.1.0a5-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a5)
 
 **An auditable, point-in-time operating system for global macro research.**
 
@@ -56,12 +56,13 @@ OpenMacroState is in **pre-alpha development**. Interfaces, schemas, and bundled
 cases may change before the first stable release. Today the repository provides
 a public research contract, versioned interchange schemas, public plugin
 protocols, an executable offline validator/demo, and three pre-alpha
-official-source capture paths. These connectors are not stable historical
-evidence packs. The repository still does **not** ship a production model adapter
-or a reviewed real historical replay, and it is not a production trading or
-policy system.
+official-source capture paths. It also includes one fixed experimental H.4.1
+accounting audit; this is not yet a general or stable state-graph interface.
+These connectors are not stable historical evidence packs. The repository still
+does **not** ship a production model adapter or a reviewed real historical replay,
+and it is not a production trading or policy system.
 
-The current public pre-release is [v0.1.0a4](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a4).
+The current public pre-release is [v0.1.0a5](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a5).
 Its wheel and source archive are available from GitHub Releases only;
 OpenMacroState has not been published to PyPI. To help shape the next milestone,
 review the Draft [2023 banking-stress replay RFC](https://github.com/alainresearch/OpenMacroState/pull/18)
@@ -161,12 +162,29 @@ openmacrostate connector capture fed-h41-release \
 openmacrostate validate build/fed-h41-release
 ```
 
-The fixture produces five `USD_million` Wednesday observations: total assets,
-securities held outright, primary credit, the Treasury General Account, and
-reserve balances. It is a small `test_only_excerpt`, not the full official page
-or an authenticated 2023 vintage. The parser selects exact semantic rows and the
-Wednesday stock column rather than a table position, and it rejects date, unit,
-column, row, number, and DOM drift. See the dedicated
+The fixture produces seven `USD_million` Wednesday observations: total assets,
+total liabilities, total capital, securities held outright, primary credit, the
+Treasury General Account, and reserve balances. It is a small
+`test_only_excerpt`, not the full official page or an authenticated 2023 vintage.
+The parser selects exact semantic rows and the Wednesday stock column rather than
+a table position, and it rejects date, unit, column, row, number, and DOM drift.
+
+The first experimental accounting rule then checks the three Table 5 totals at
+the same source, artifact, unit, and observation time:
+
+```bash
+oms audit accounting build/fed-h41-release \
+  --rule fed-h41-balance-sheet-v1 \
+  --observed-at 2023-03-15T00:00:00Z
+```
+
+It tests `assets = liabilities + capital` with a fixed tolerance of exactly
+1 `USD_million` for reported whole-million rounding. It reads values only from
+accepted observations, re-hashes and re-normalizes the preserved local artifact,
+and requires all seven regenerated records to match exactly. This proves local
+derivation, not source acquisition or historical availability, and it does not
+create a stable public accounting schema. See the
+[accounting audit guide](docs/accounting-audit.md) and dedicated
 [H.4.1 source contract](docs/fed-h41-source-contract.md).
 
 ## The problem it addresses
@@ -236,8 +254,8 @@ testing, and attribution standards as human-written work.
 src/openmacrostate/
   api/v1/         public value types, errors, and connector/model protocols
   connectors/     fixed registry of review-trusted built-in connectors
-  runtime/        case loading, checksums, cutoff filtering, and scoring
-  cli.py          `validate`, `demo`, `example`, and `connector capture`
+  runtime/        case loading, checksums, cutoff filtering, accounting, and scoring
+  cli.py          validation, demos, connector capture, and experimental audit commands
 schemas/v1/       JSON Schema interchange contracts
 cases/2023-banks/ synthetic offline teaching fixture (not historical evidence)
 reveals/2023-banks/ separate synthetic post-resolution outcome bundle
@@ -326,10 +344,13 @@ advice. Source data can be incomplete, revised, delayed, or wrong.
 清单；`validate` 完全不读取揭晓包。代码采用 Apache-2.0，外部数据仍遵守各自
 许可证。
 
-首批官方数据纵向切片已经落地：纽约联储 SOFR 连接器 `frbny-sofr`，以及
-美国财政部总公共债务连接器 `treasury-debt-to-penny`。二者都采用保守时间
-规则：今天抓取到的历史值，不会被倒填成系统在当年已经捕获的证据。详见
-[Connector 契约](docs/connectors.md)。
+首批三个官方数据纵向切片已经落地：纽约联储 SOFR 连接器 `frbny-sofr`、
+美国财政部总公共债务连接器 `treasury-debt-to-penny`，以及美联储 H.4.1
+带日期发布页连接器 `fed-h41-release`。三者都采用保守时间规则：今天抓取到的
+历史值，不会被倒填成系统在当年已经捕获的证据。H.4.1 还提供首个实验性会计
+校验，用固定 100 万美元容差核对“总资产 = 总负债 + 总资本”，但尚未形成稳定
+会计 schema 或通用状态图。详见 [Connector 契约](docs/connectors.md)与
+[会计校验说明](docs/accounting-audit.md)。
 
 快速运行：
 

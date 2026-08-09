@@ -25,15 +25,16 @@ _FIRST_RULESET_DATE = date(2021, 8, 12)
 _NEW_YORK = ZoneInfo("America/New_York")
 _DATE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 _REQUEST_URL = re.compile(r"^https://www\.federalreserve\.gov/releases/h41/([0-9]{8})/h41\.htm$")
-_RELEVANT_CELL = re.compile(r"^(t1|t2|t7)(?:h[1-9][0-9]*c[1-9][0-9]*|r[1-9][0-9]*c[1-9][0-9]*)$")
-_ROW_LABEL = re.compile(r"^(t1|t2|t7)r([1-9][0-9]*)c1$")
+_RELEVANT_CELL = re.compile(r"^(t1|t2|t7|t8)(?:h[1-9][0-9]*c[1-9][0-9]*|r[1-9][0-9]*c[1-9][0-9]*)$")
+_ROW_LABEL = re.compile(r"^(t1|t2|t7|t8)r([1-9][0-9]*)c1$")
 _MILLIONS = re.compile(r"^(?:0|[1-9][0-9]{0,2}(?:,[0-9]{3})*)$")
 _RELEASE_PREFIX = "Release Date: "
-_TABLE_PREFIXES = ("t1", "t2", "t7")
+_TABLE_PREFIXES = ("t1", "t2", "t7", "t8")
 _TABLE_HEADINGS = {
     "t1": "1. Factors Affecting Reserve Balances of Depository Institutions",
     "t2": "1. Factors Affecting Reserve Balances of Depository Institutions (continued)",
     "t7": "5. Consolidated Statement of Condition of All Federal Reserve Banks",
+    "t8": "5. Consolidated Statement of Condition of All Federal Reserve Banks (continued)",
 }
 _HIDDEN_CLASSES = frozenset(
     {"d-none", "display-none", "hidden", "is-hidden", "sr-only", "visually-hidden"}
@@ -44,7 +45,7 @@ _VOID_TAGS = frozenset(
 
 
 class _H41HtmlParser(HTMLParser):
-    """Collect ruleset-1 cells while preserving their table and row lineage."""
+    """Collect ruleset-3 cells while preserving their table and row lineage."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -53,6 +54,7 @@ class _H41HtmlParser(HTMLParser):
         self.cell_rows: dict[str, int] = {}
         self.cell_tables: dict[str, int] = {}
         self.table_contexts: dict[int, tuple[tuple[str, str, bool, bool], ...]] = {}
+        self.table_has_plain_div_parent: dict[int, bool] = {}
         self.visible_chunks: list[str] = []
         self._active_cell: tuple[str, str, list[str]] | None = None
         self._completed_children: dict[int, list[tuple[str, str, bool, bool]]] = {}
@@ -60,6 +62,7 @@ class _H41HtmlParser(HTMLParser):
         self._semantic_attributes: dict[int, tuple[bool, bool]] = {}
         self._seen_cells: set[str] = set()
         self._element_stack: list[tuple[str, int, int, bool, bool, bool]] = []
+        self._plain_divs: set[int] = set()
         self._hidden_depth = 0
         self._ignored_depth = 0
         self._next_element = 0
@@ -85,7 +88,9 @@ class _H41HtmlParser(HTMLParser):
         return result
 
     @staticmethod
-    def _starts_hidden(attrs: Mapping[str, str | None]) -> bool:
+    def _starts_hidden(tag: str, attrs: Mapping[str, str | None]) -> bool:
+        if tag in {"details", "dialog"} and "open" not in attrs:
+            return True
         if "hidden" in attrs or "inert" in attrs:
             return True
         aria_hidden = attrs.get("aria-hidden")
@@ -106,7 +111,7 @@ class _H41HtmlParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         first_attributes = self._first_attributes(attrs)
-        own_hidden = self._starts_hidden(first_attributes)
+        own_hidden = self._starts_hidden(tag, first_attributes)
         own_ignored = tag in {"noscript", "script", "style", "template"}
         parent_id = self._element_stack[-1][1] if self._element_stack else 0
         self._next_element += 1
@@ -124,6 +129,8 @@ class _H41HtmlParser(HTMLParser):
             )
             self._hidden_depth += int(own_hidden)
             self._ignored_depth += int(own_ignored)
+            if tag == "div" and not attrs:
+                self._plain_divs.add(element_id)
         elif not hidden and not ignored:
             self._completed_children.setdefault(parent_id, []).append(
                 (
@@ -140,6 +147,7 @@ class _H41HtmlParser(HTMLParser):
             table_id = self._next_table
             self._table_stack.append(table_id)
             self.table_contexts[table_id] = tuple(self._completed_children.get(parent_id, ())[-2:])
+            self.table_has_plain_div_parent[table_id] = parent_id in self._plain_divs
         elif tag == "tr" and self._table_stack:
             self._next_row += 1
             self._row_stack.append((self._table_stack[-1], self._next_row))
@@ -370,7 +378,7 @@ class FedH41ReleaseConnector:
     """Capture one dated H.4.1 HTML release under conservative time semantics."""
 
     __slots__ = ()
-    ruleset_version = "fed-h41-release-normalization/1"
+    ruleset_version = "fed-h41-release-normalization/3"
     bundle_metadata = CaptureBundleMetadata(
         title="Federal Reserve Board dated H.4.1 official-source capture",
         fixture_kind="licensed_public",
@@ -391,7 +399,7 @@ class FedH41ReleaseConnector:
         {
             "schema_version": "1.0.0",
             "plugin_id": "fed-h41-release",
-            "plugin_version": "0.1.0",
+            "plugin_version": "0.2.0",
             "api_version": "1",
             "source_ids": ("federal.reserve.board.h41.dated_release",),
             "allowed_hosts": ("www.federalreserve.gov",),
@@ -409,10 +417,27 @@ class FedH41ReleaseConnector:
 
     _SERIES = (
         ("fed.h41.total_assets", "t7", "Total assets", 3),
+        ("fed.h41.total_liabilities", "t8", "Total liabilities", 3),
+        ("fed.h41.total_capital", "t8", "Total capital", 3),
         ("fed.h41.securities_held_outright", "t1", "Securities held outright 1", 5),
         ("fed.h41.primary_credit", "t1", "Primary credit", 5),
         ("fed.h41.treasury_general_account", "t2", "U.S. Treasury, General Account", 5),
         ("fed.h41.reserve_balances", "t2", "Reserve balances with Federal Reserve Banks", 5),
+    )
+    _ACCOUNTING = MappingProxyType(
+        {
+            "fed.h41.total_assets": ("fed.h41.table5", "asset", "total"),
+            "fed.h41.total_liabilities": ("fed.h41.table5", "liability", "total"),
+            "fed.h41.total_capital": ("fed.h41.table5", "capital", "total"),
+            "fed.h41.securities_held_outright": ("fed.h41.table1", "asset", "component"),
+            "fed.h41.primary_credit": ("fed.h41.table1", "asset", "component"),
+            "fed.h41.treasury_general_account": (
+                "fed.h41.table1",
+                "liability",
+                "component",
+            ),
+            "fed.h41.reserve_balances": ("fed.h41.table1", "liability", "component"),
+        }
     )
 
     def plan(self, request: Mapping[str, Any]) -> tuple[FetchRequest, ...]:
@@ -425,7 +450,7 @@ class FedH41ReleaseConnector:
                 "fed-h41-release requires start and end to be the same release date"
             )
         if start < _FIRST_RULESET_DATE:
-            raise ContractError("fed-h41-release ruleset 1 supports dates on or after 2021-08-12")
+            raise ContractError("fed-h41-release ruleset 3 supports dates on or after 2021-08-12")
         return (
             FetchRequest(
                 method="GET",
@@ -471,6 +496,11 @@ class FedH41ReleaseConnector:
                 raise ContractError(f"H.4.1 {prefix} cells must belong to exactly one table")
             table_id = next(iter(table_ids))
             prefix_tables[prefix] = table_id
+            if not parser.table_has_plain_div_parent.get(table_id, False):
+                raise ContractError(
+                    f"H.4.1 {prefix} table must have one immediate plain div parent "
+                    "without attributes"
+                )
             context = parser.table_contexts.get(table_id, ())
             if len(context) != 2:
                 raise ContractError(
@@ -598,6 +628,13 @@ class FedH41ReleaseConnector:
                     "source_table_prefix": prefix,
                     "source_row_label": label,
                     "source_cell_id": values[series_id][2],
+                    "org.openmacrostate.accounting": {
+                        "boundary_id": "us.federal_reserve_banks.consolidated",
+                        "statement_id": self._ACCOUNTING[series_id][0],
+                        "side": self._ACCOUNTING[series_id][1],
+                        "role": self._ACCOUNTING[series_id][2],
+                        "stock_flow": "stock",
+                    },
                 },
             )
             for series_id, prefix, label, _ in self._SERIES

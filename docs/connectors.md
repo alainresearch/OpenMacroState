@@ -296,18 +296,24 @@ Treasury endorsement.
 ## Federal Reserve H.4.1 dated-release source
 
 The `fed-h41-release` connector constructs one dated Board HTML URL from equal
-`--start` and `--end` release dates. Ruleset 1 supports the audited current DOM
-era from 2021-08-12 onward. It selects five Wednesday stock values: total assets,
-securities held outright, primary credit, the Treasury General Account, and
-reserve balances. Each remains in the reported `USD_million` unit.
+`--start` and `--end` release dates. Ruleset 3 supports the audited current DOM
+era from 2021-08-12 onward. It selects seven Wednesday stock values: total assets,
+total liabilities, total capital, securities held outright, primary credit, the
+Treasury General Account, and reserve balances. Each remains in the reported
+`USD_million` unit.
 
 The parser binds unique exact row labels to exact table prefixes and the
 `Wednesday` value column. Each selected table must immediately follow its exact
-heading and `Millions of dollars` unit paragraphs under one parent, and each
+heading and `Millions of dollars` unit paragraphs inside one plain `div`
+parent, and each
 value header must resolve to real header cells in the same table. It does not
 use the first number, a fixed row number, or HTML table ordinal. Wrong units,
 hidden or detached semantic context, duplicate IDs or rows, date mismatch,
 future dates, malformed values, and unsupported structure fail closed.
+
+The H.4.1 parser evaluates semantic HTML, including native hidden states and
+supported inline hidden markers. It does not fetch stylesheets or claim to
+reproduce arbitrary browser CSS selectors and computed visibility.
 
 The release path date and Wednesday observation date are source claims, not
 availability timestamps. `released_at`, `vintage_at`, and `ingested_at` use the
@@ -318,6 +324,13 @@ dated URL can be corrected later, so every capture remains prospective and
 The exact source, parser, time, exclusion, fixture, and rights decisions are in
 the [H.4.1 source contract](fed-h41-source-contract.md). The connector does not
 fall back to DDP, current XML, PDF, FRED, or a mirror.
+
+The three Table 5 totals also carry provisional namespaced accounting metadata.
+The fixed experimental
+[`fed-h41-balance-sheet-v1` audit](accounting-audit.md) checks
+`assets = liabilities + capital` only when source, artifact, unit, and
+observation time match, with an exact 1 `USD_million` tolerance for source
+rounding. This audit is not a stable public schema or a general state graph.
 
 ## Source and license requirements
 
