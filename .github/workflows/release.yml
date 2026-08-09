@@ -103,7 +103,7 @@ jobs:
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/fed_h41_release/recording.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/fed_h41_release/response.html'
       - name: Upload candidate distributions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-candidate
           path: dist/
