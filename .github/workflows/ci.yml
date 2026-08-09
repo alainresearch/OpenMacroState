@@ -98,7 +98,7 @@ jobs:
             build/treasury-debt-to-penny
             build/fed-h41-release
           if-no-files-found: error
-windows-offline-demo:
+  windows-offline-demo:
     name: Offline replay demo (Windows)
     runs-on: windows-latest
     steps:
