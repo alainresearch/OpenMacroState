@@ -146,4 +146,3 @@ def test_connector_list_json_command(capsys) -> None:
     assert frbny["capture_modes"] == ["online", "recording"]
     assert frbny["redistribution_status"] == "restricted"
     assert frbny["documentation_link"] == "https://www.newyorkfed.org/privacy/termsofuse.html"
-

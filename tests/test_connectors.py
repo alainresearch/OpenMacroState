@@ -600,4 +600,3 @@ def test_list_builtin_connectors() -> None:
         "redistribution_status": "restricted",
         "documentation_link": "https://www.newyorkfed.org/privacy/termsofuse.html",
     }
-
