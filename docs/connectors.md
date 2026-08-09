@@ -39,6 +39,22 @@ loaded. A proposed connector must first pass source, license, security,
 determinism, and time-semantics review before it can join the trusted registry.
 This pre-alpha is not a malicious-plugin sandbox.
 
+## Discovering connectors
+
+Built-in connectors can be discovered without touching the network or writing code:
+
+```bash
+oms connector list
+```
+
+To output structured JSON:
+
+```bash
+oms connector list --json
+```
+
+The list command details each review-trusted connector's ID, version, source name, allowed hosts, capture modes, redistribution status, and documentation link, alongside an explicit notice that built-in review trust is not a third-party sandbox.
+
 ## Recorded and online modes
 
 Network access is never an implicit fallback. The capture command requires

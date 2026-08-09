@@ -119,3 +119,31 @@ def test_force_does_not_follow_output_symlinks(tmp_path: Path, capsys) -> None:
     assert main(_demo_args(output, "--force")) == 2
     assert "non-regular output" in capsys.readouterr().err
     assert victim.read_text(encoding="utf-8") == "keep me"
+
+
+def test_connector_list_command(capsys) -> None:
+    assert main(["connector", "list"]) == 0
+    stdout = capsys.readouterr().out
+    assert "Built-in review trust is not a third-party sandbox." in stdout
+    assert "frbny-sofr v0.1.0" in stdout
+    assert "Source name: Federal Reserve Bank of New York" in stdout
+    assert "Allowed host: markets.newyorkfed.org" in stdout
+    assert "Capture modes: online, recording" in stdout
+    assert "Redistribution status: restricted" in stdout
+    assert "Documentation link: https://www.newyorkfed.org/privacy/termsofuse.html" in stdout
+
+
+def test_connector_list_json_command(capsys) -> None:
+    assert main(["connector", "list", "--json"]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data["trust_notice"] == "Built-in review trust is not a third-party sandbox."
+    connectors = data["connectors"]
+    assert len(connectors) >= 1
+    frbny = next(c for c in connectors if c["connector_id"] == "frbny-sofr")
+    assert frbny["version"] == "0.1.0"
+    assert frbny["source_name"] == "Federal Reserve Bank of New York"
+    assert frbny["allowed_hosts"] == ["markets.newyorkfed.org"]
+    assert frbny["capture_modes"] == ["online", "recording"]
+    assert frbny["redistribution_status"] == "restricted"
+    assert frbny["documentation_link"] == "https://www.newyorkfed.org/privacy/termsofuse.html"
+

@@ -583,3 +583,21 @@ def test_cli_requires_explicit_network_or_recording(tmp_path: Path, capsys) -> N
         == 2
     )
     assert "network access is never implicit" in capsys.readouterr().err
+
+
+def test_list_builtin_connectors() -> None:
+    from openmacrostate.connectors import list_builtin_connectors
+
+    info_list = list_builtin_connectors()
+    assert isinstance(info_list, tuple)
+    frbny = next(c for c in info_list if c["connector_id"] == "frbny-sofr")
+    assert frbny == {
+        "connector_id": "frbny-sofr",
+        "version": "0.1.0",
+        "source_name": "Federal Reserve Bank of New York",
+        "allowed_hosts": ["markets.newyorkfed.org"],
+        "capture_modes": ["online", "recording"],
+        "redistribution_status": "restricted",
+        "documentation_link": "https://www.newyorkfed.org/privacy/termsofuse.html",
+    }
+

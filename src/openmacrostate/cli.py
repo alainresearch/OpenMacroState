@@ -11,7 +11,11 @@ from typing import Any
 
 from openmacrostate import __version__
 from openmacrostate.api.v1.errors import OpenMacroStateError
-from openmacrostate.connectors import builtin_connector_ids, get_builtin_connector
+from openmacrostate.connectors import (
+    builtin_connector_ids,
+    get_builtin_connector,
+    list_builtin_connectors,
+)
 from openmacrostate.resources import bundled_example
 from openmacrostate.runtime.case import CaseEvaluation, evaluate_case, score_case
 from openmacrostate.runtime.connectors import run_connector
@@ -72,6 +76,11 @@ def _parser() -> argparse.ArgumentParser:
         "connector", help="capture official-source bytes through a policy-enforced built-in"
     )
     connector_commands = connector.add_subparsers(dest="connector_command", required=True)
+    list_connectors = connector_commands.add_parser(
+        "list", help="list built-in review-trusted connectors and metadata"
+    )
+    list_connectors.add_argument("--json", action="store_true", dest="as_json")
+
     capture = connector_commands.add_parser(
         "capture", help="write a new, complete capture case without overwriting"
     )
@@ -268,6 +277,33 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.command == "connector":
+            if args.connector_command == "list":
+                connectors_data = list_builtin_connectors()
+                trust_notice = "Built-in review trust is not a third-party sandbox."
+                if args.as_json:
+                    output_data = {
+                        "connectors": list(connectors_data),
+                        "trust_notice": trust_notice,
+                    }
+                    print(json.dumps(output_data, ensure_ascii=False, sort_keys=True))
+                else:
+                    lines = [trust_notice, ""]
+                    for info in connectors_data:
+                        hosts = ", ".join(info["allowed_hosts"])
+                        modes = ", ".join(info["capture_modes"])
+                        lines.extend(
+                            [
+                                f"{info['connector_id']} v{info['version']}",
+                                f"  Source name: {info['source_name']}",
+                                f"  Allowed host: {hosts}",
+                                f"  Capture modes: {modes}",
+                                f"  Redistribution status: {info['redistribution_status']}",
+                                f"  Documentation link: {info['documentation_link']}",
+                                "",
+                            ]
+                        )
+                    print("\n".join(lines).rstrip())
+                return 0
             if args.recording is None and not args.online:
                 raise OpenMacroStateError(
                     "connector capture requires exactly one of --recording or --online; "
