@@ -67,9 +67,18 @@ jobs:
           python -m pip install -e '.[dev]'
       - name: Run bundled case
         run: openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
+      - name: Replay the SOFR connector fixture offline
+        run: |
+          openmacrostate connector capture frbny-sofr \
+            --start 2023-03-22 --end 2023-03-22 \
+            --recording tests/fixtures/connectors/frbny_sofr/recording.json \
+            --output build/frbny-sofr
+          openmacrostate validate build/frbny-sofr
       - name: Upload replay artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: 2023-banks-demo
-          path: build/demo
+          name: offline-replay-artifacts
+          path: |
+            build/demo
+            build/frbny-sofr
           if-no-files-found: error

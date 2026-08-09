@@ -1,0 +1,1 @@
+{ "refRates": [ { "effectiveDate": "2023-03-22", "type": "SOFR" ,"percentRate": 4.55 ,"percentPercentile1": 4.50 ,"percentPercentile25": 4.54 ,"percentPercentile75": 4.58 ,"percentPercentile99": 4.63 ,"volumeInBillions": 1203 ,"revisionIndicator": "" } ] }

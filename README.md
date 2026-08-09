@@ -1,5 +1,9 @@
 # OpenMacroState
 
+[![CI](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml/badge.svg)](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml)
+[![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue.svg)](https://www.python.org/)
+[![Code/docs: Apache-2.0](https://img.shields.io/badge/code%20%26%20docs-Apache--2.0-blue.svg)](LICENSE)
+
 **An auditable, point-in-time operating system for global macro research.**
 
 OpenMacroState is building a way for researchers to reconstruct what could have
@@ -8,14 +12,51 @@ record falsifiable claims, and score those claims after outcomes arrive.
 
 > Replay what the world knew, not what history later revised.
 
+## The value in 30 seconds
+
+OpenMacroState turns exact source bytes into a research record that can answer
+four questions later: **what was available, when was it available, which claim
+used it, and how did the claim score?**
+
+It does this without asking an AI model to remember the boundary:
+
+1. freeze a core-observed official response or separately recorded bytes;
+2. hash it and preserve its retrieval metadata without treating a self-reported
+   receipt time as historical proof;
+3. normalize observations with five distinct time fields;
+4. reject evidence that was not eligible at the research cutoff; and
+5. keep later outcomes in a separate reveal bundle until scoring is allowed.
+
+```mermaid
+flowchart LR
+    A["Official source<br/>or recorded response"] --> B["Core-owned transport<br/>and SHA-256 freeze"]
+    B --> C["Review-trusted<br/>built-in connector"]
+    C --> D["Five-clock<br/>observations"]
+    D --> E["Cutoff and<br/>evidence closure"]
+    E --> F["Frozen research<br/>snapshot"]
+    G["Physically separate<br/>reveal bundle"] --> H["Post-resolution<br/>scoring"]
+    F --> H
+```
+
+OpenMacroState is not another chart terminal and does not claim to predict
+markets. Its first official-source pre-alpha vertical slice is the New York Fed
+SOFR connector, `frbny-sofr`. It is deliberately conservative:
+historical values retrieved today do not become evidence that the system had
+captured them in the past. Replaying a recording with an old `retrieved_at`
+claim does not restore past availability either: without an authenticated proof,
+the core uses the current replay time for eligibility. See the
+[connector contract](docs/connectors.md).
+
 ## Project status
 
 OpenMacroState is in **pre-alpha development**. Interfaces, schemas, and bundled
 cases may change before the first stable release. Today the repository provides
 a public research contract, versioned interchange schemas, public plugin
-protocols, and an executable offline validator/demo. It does **not** yet ship a
-production data connector, model adapter, or real historical evidence pack, and
-it is not a production trading or policy system.
+protocols, an executable offline validator/demo, and the first pre-alpha
+official-source capture path. That connector is not yet a stable historical
+evidence pack. The repository still does **not** ship a production model adapter
+or a reviewed real historical replay, and it is not a production trading or
+policy system.
 
 ## Five-minute synthetic demo
 
@@ -30,7 +71,8 @@ openmacrostate validate cases/2023-banks
 openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
 ```
 
-An installed wheel also carries this small fixture, so its shortest smoke test is:
+A wheel built from the repository also carries this small fixture, so its
+shortest smoke test is:
 
 ```bash
 openmacrostate example 2023-banks --output build/example
@@ -57,6 +99,28 @@ pytest
 
 See the [quickstart](docs/quickstart.md) for the expected artifacts and common
 troubleshooting steps.
+
+## First official-source capture
+
+The built-in `frbny-sofr` connector exercises the full acquisition boundary
+without making network access implicit:
+
+```bash
+mkdir -p build
+openmacrostate connector capture frbny-sofr \
+  --start 2023-03-22 --end 2023-03-22 \
+  --recording tests/fixtures/connectors/frbny_sofr/recording.json \
+  --output build/frbny-sofr
+openmacrostate validate build/frbny-sofr
+```
+
+This offline fixture produces six normalized observations and a case bundle
+with eight checksummed research files. Its bytes and manifest are reproducible,
+but its source and receipt time remain explicitly unverified. Use `--online`
+instead of `--recording` only when you intentionally want the core to make one
+allowlisted HTTPS request. Live capture is labeled `core_observed_https`; that
+is a local acquisition record, not a signed historical timestamp or a causal
+claim. See the [connector contract](docs/connectors.md).
 
 ## The problem it addresses
 
@@ -124,8 +188,9 @@ testing, and attribution standards as human-written work.
 ```text
 src/openmacrostate/
   api/v1/         public value types, errors, and connector/model protocols
+  connectors/     fixed registry of review-trusted built-in connectors
   runtime/        case loading, checksums, cutoff filtering, and scoring
-  cli.py          `validate`, `demo`, and bundled `example` entry points
+  cli.py          `validate`, `demo`, `example`, and `connector capture`
 schemas/v1/       JSON Schema interchange contracts
 cases/2023-banks/ synthetic offline teaching fixture (not historical evidence)
 reveals/2023-banks/ separate synthetic post-resolution outcome bundle
@@ -135,7 +200,10 @@ docs/             research, contribution, and governance documentation
 ```
 
 The connector and model directories under `contrib/templates/` are extension
-templates, not bundled live integrations.
+templates, not bundled live integrations. Connector execution is fail-closed:
+offline recordings are the reproducible default workflow, live network access
+must be selected explicitly, and arbitrary third-party Python plugins are not
+loaded in this pre-alpha. See [docs/connectors.md](docs/connectors.md).
 
 ## Ways to contribute
 
@@ -151,7 +219,9 @@ contribution lanes are:
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md). Small fixes may go directly to a
 pull request; substantial changes to the core protocol begin with an RFC. Project
-priorities are described in the [roadmap](ROADMAP.md).
+priorities are described in the [roadmap](ROADMAP.md). Contributors working on
+official sources should also read the [connector contract](docs/connectors.md)
+and [data-license policy](docs/data-licensing.md).
 
 ## Community and governance
 
@@ -208,6 +278,10 @@ advice. Source data can be incomplete, revised, delayed, or wrong.
 替代证据。研究包位于 `cases/`，事后揭晓包位于 `reveals/`，二者各自拥有完整性
 清单；`validate` 完全不读取揭晓包。代码采用 Apache-2.0，外部数据仍遵守各自
 许可证。
+
+首个官方数据纵向切片已以 pre-alpha 纽约联储 SOFR 连接器 `frbny-sofr` 落地。
+它采用保守时间规则：今天抓取到的历史值，不会被倒填成系统在当年已经
+捕获的证据。详见[Connector 契约](docs/connectors.md)。
 
 快速运行：
 

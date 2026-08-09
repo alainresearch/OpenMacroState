@@ -11,8 +11,11 @@ from typing import Any
 
 from openmacrostate import __version__
 from openmacrostate.api.v1.errors import OpenMacroStateError
+from openmacrostate.connectors import builtin_connector_ids, get_builtin_connector
 from openmacrostate.resources import bundled_example
 from openmacrostate.runtime.case import CaseEvaluation, evaluate_case, score_case
+from openmacrostate.runtime.connectors import run_connector
+from openmacrostate.runtime.http import LiveHttpTransport, RecordedHttpTransport
 from openmacrostate.runtime.jsonio import load_json, write_json, write_jsonl, write_text_atomic
 
 _OUTPUT_MARKER = ".openmacrostate-output.json"
@@ -64,6 +67,23 @@ def _parser() -> argparse.ArgumentParser:
     example.add_argument("name", choices=["2023-banks"])
     example.add_argument("--output", type=Path, required=True)
     example.add_argument("--force", action="store_true")
+
+    connector = subparsers.add_parser(
+        "connector", help="capture official-source bytes through a policy-enforced built-in"
+    )
+    connector_commands = connector.add_subparsers(dest="connector_command", required=True)
+    capture = connector_commands.add_parser(
+        "capture", help="write a new, complete capture case without overwriting"
+    )
+    capture.add_argument("connector_id", choices=builtin_connector_ids())
+    capture.add_argument("--start", required=True, help="inclusive value date, YYYY-MM-DD")
+    capture.add_argument("--end", required=True, help="inclusive value date, YYYY-MM-DD")
+    capture_mode = capture.add_mutually_exclusive_group()
+    capture_mode.add_argument("--recording", type=Path, help="replay an exact recorded response")
+    capture_mode.add_argument(
+        "--online", action="store_true", help="explicitly permit one allowlisted HTTPS request"
+    )
+    capture.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -247,6 +267,33 @@ def _write_demo(
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.command == "connector":
+            if args.recording is None and not args.online:
+                raise OpenMacroStateError(
+                    "connector capture requires exactly one of --recording or --online; "
+                    "network access is never implicit"
+                )
+            connector = get_builtin_connector(args.connector_id)
+            if args.recording is not None:
+                transport = RecordedHttpTransport(args.recording)
+                protected_paths = (args.recording, args.recording.parent)
+            else:
+                transport = LiveHttpTransport()
+                protected_paths = ()
+            capture = run_connector(
+                connector,
+                {"start": args.start, "end": args.end},
+                transport,
+                args.output,
+                protected_paths=protected_paths,
+            )
+            evaluation = evaluate_case(capture.case_dir)
+            print(_human_summary(evaluation))
+            print(
+                f"WROTE {capture.case_dir} | connector={args.connector_id} | "
+                f"mode={capture.capture_mode} | observations={len(capture.observation_ids)}"
+            )
+            return 0
         if args.command == "example":
             example = bundled_example(args.name)
             evaluation = evaluate_case(example.case_dir)

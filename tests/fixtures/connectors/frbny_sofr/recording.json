@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "recording_kind": "test_only_excerpt",
+  "request": {
+    "method": "GET",
+    "url": "https://markets.newyorkfed.org/api/rates/secured/sofr/search.json?startDate=2023-03-22&endDate=2023-03-22",
+    "accept": "application/json"
+  },
+  "response": {
+    "status_code": 200,
+    "final_url": "https://markets.newyorkfed.org/api/rates/secured/sofr/search.json?startDate=2023-03-22&endDate=2023-03-22",
+    "headers": {
+      "content-type": "application/json;charset=utf-8",
+      "date": "Sun, 09 Aug 2026 15:18:38 GMT"
+    },
+    "retrieved_at": "2026-08-09T15:18:38Z",
+    "body_file": "response.json",
+    "byte_length": 257,
+    "sha256": "ff6ae739b1eac01685754c4a28c810ea059c67f602d67135874e7dbe22c6e7f3"
+  }
+}

@@ -2,18 +2,26 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Iterable, Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any, Protocol
+
+from openmacrostate.api.v1.connector_types import FetchRequest, FrozenArtifact, ObservationDraft
 
 
 class Connector(Protocol):
-    """Collect bytes and normalize only artifacts frozen by the core runtime."""
+    """Plan retrievals and normalize only artifacts frozen by the core runtime.
+
+    Connectors do not receive a network client, secret store, or output path. The
+    core validates each fetch plan, owns retrieval and hashing, and supplies the
+    exact immutable bytes to ``normalize``.
+    """
 
     spec: Mapping[str, Any]
+    ruleset_version: str
 
-    async def collect(self, request: Mapping[str, Any], context: Any) -> AsyncIterator[bytes]: ...
+    def plan(self, request: Mapping[str, Any]) -> tuple[FetchRequest, ...]: ...
 
-    def normalize(self, artifact: Any, context: Any) -> Iterable[Mapping[str, Any]]: ...
+    def normalize(self, artifact: FrozenArtifact) -> Iterable[ObservationDraft]: ...
 
 
 class ModelAdapter(Protocol):

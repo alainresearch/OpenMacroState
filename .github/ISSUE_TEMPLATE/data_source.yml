@@ -3,6 +3,14 @@ description: Propose a source with explicit timing, provenance, and license info
 title: "[Data]: "
 labels: ["type: data", "status: needs-triage", "needs: license-review"]
 body:
+  - type: markdown
+    attributes:
+      value: >-
+        Read the [connector trust contract](https://github.com/alainresearch/OpenMacroState/blob/main/docs/connectors.md)
+        and [data-license policy](https://github.com/alainresearch/OpenMacroState/blob/main/docs/data-licensing.md)
+        before proposing a source. Prefer the originating official publisher.
+        FRED or ALFRED vintage semantics do not override their current software,
+        storage, archival, AI-use, or third-party-rights restrictions.
   - type: input
     id: publisher
     attributes:

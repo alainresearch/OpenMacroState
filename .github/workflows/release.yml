@@ -29,6 +29,13 @@ jobs:
         run: pytest
       - name: Verify offline demo
         run: openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
+      - name: Verify offline SOFR connector replay
+        run: |
+          openmacrostate connector capture frbny-sofr \
+            --start 2023-03-22 --end 2023-03-22 \
+            --recording tests/fixtures/connectors/frbny_sofr/recording.json \
+            --output build/frbny-sofr
+          openmacrostate validate build/frbny-sofr
       - name: Build distributions
         run: python -m build
       - name: Smoke-test the built wheel outside the checkout
@@ -37,12 +44,20 @@ jobs:
           build/wheel-smoke/bin/python -m pip install dist/*.whl
           pushd "$RUNNER_TEMP"
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" example 2023-banks --output wheel-demo
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" connector capture --help
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" connector capture frbny-sofr \
+            --start 2023-03-22 --end 2023-03-22 \
+            --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/frbny_sofr/recording.json" \
+            --output wheel-sofr
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" validate wheel-sofr
           test -f wheel-demo/snapshot.json
           test -f wheel-demo/scores.json
+          test -f wheel-sofr/collection.json
           popd
       - name: Verify source distribution contents
         run: |
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/schemas/v1/reveal.schema.json'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/schemas/v1/collection.schema.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/cases/2023-banks/case.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/reveals/2023-banks/reveal.json'
       - name: Upload candidate distributions

@@ -12,7 +12,7 @@ body:
     id: version
     attributes:
       label: Version or commit
-      placeholder: "0.1.0a1 or commit SHA"
+      placeholder: "openmacrostate --version output or commit SHA"
     validations:
       required: true
   - type: input

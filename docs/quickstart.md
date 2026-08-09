@@ -156,6 +156,9 @@ data, or undisclosed vulnerabilities publicly.
 
 ## Next steps
 
+- Read the [connector contract](connectors.md) before recording or proposing an
+  official source. Network capture must be explicit and a later retrieval cannot
+  be backdated into an earlier replay.
 - Read the [research contract](research-contract.md) before creating a case or
   connector.
 - Read the [data-license policy](data-licensing.md) before adding source material.

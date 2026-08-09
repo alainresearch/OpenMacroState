@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/connector.schema.json",
+  "title": "OpenMacroState Trusted Connector Spec v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plugin_id",
+    "plugin_version",
+    "api_version",
+    "source_ids",
+    "allowed_hosts",
+    "required_secret_names",
+    "license"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "plugin_id": {"$ref": "#/$defs/stableId"},
+    "plugin_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "api_version": {"const": "1"},
+    "source_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/stableId"}
+    },
+    "allowed_hosts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?$"
+      }
+    },
+    "required_secret_names": {"type": "array", "maxItems": 0},
+    "license": {"$ref": "#/$defs/license"}
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{1,255}$"
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "license_id",
+        "terms_url",
+        "redistribution",
+        "commercial_use",
+        "attribution",
+        "reviewed_at"
+      ],
+      "properties": {
+        "license_id": {"type": "string", "minLength": 1},
+        "terms_url": {"type": "string", "format": "uri"},
+        "redistribution": {"enum": ["allowed", "restricted", "forbidden", "unknown"]},
+        "commercial_use": {"enum": ["allowed", "restricted", "forbidden", "unknown"]},
+        "attribution": {"type": "string", "minLength": 1},
+        "reviewed_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}
