@@ -43,13 +43,18 @@ The Release Manager:
      --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
      --output build/treasury-debt-to-penny
    openmacrostate validate build/treasury-debt-to-penny
+   openmacrostate connector capture fed-h41-release \
+     --start 2023-03-16 --end 2023-03-16 \
+     --recording tests/fixtures/connectors/fed_h41_release/recording.json \
+     --output build/fed-h41-release
+   openmacrostate validate build/fed-h41-release
    python -m build
    ```
 
 5. installs the built wheel into an empty environment outside the checkout and
    runs both `openmacrostate example 2023-banks --output wheel-demo` and the
-   bundled offline SOFR and Treasury recordings through the installed connectors
-   and validator;
+   bundled offline SOFR, Treasury, and H.4.1 recordings through the installed
+   connectors and validator;
 6. confirms the source distribution contains `schemas/`, `cases/`, and
    `reveals/` rather than testing only an editable checkout;
 7. inspects the demo manifest and distributions rather than relying only on a

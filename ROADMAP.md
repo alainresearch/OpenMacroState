@@ -34,6 +34,9 @@ Capability status:
 - ✅ the second official-source connector, `treasury-debt-to-penny`, with a
   fixed single-page Debt to the Penny query, offline replay, and conservative
   release/vintage semantics;
+- ✅ the third official-source connector, `fed-h41-release`, with dated Board
+  HTML capture, five balance-sheet state variables, semantic column binding,
+  and conservative historical-version semantics;
 - ⬜ accounting-identity and accounting-invariant tests; and
 - ⬜ at least one polished, evidence-reviewed historical replay in addition to
   the synthetic `2023-banks` fixture.
@@ -44,8 +47,9 @@ The official-source sequence is intentionally narrow:
    dollar funding rate from a date-bounded official endpoint;
 2. ✅ **Treasury Fiscal Data** — prospective capture of total public debt
    outstanding through a fixed, field-selected Debt to the Penny query; and
-3. ⏭ **Federal Reserve H.4.1** — dated official releases for the Fed balance
-   sheet, avoiding current-only feeds that cannot prove a historical vintage.
+3. ✅ **Federal Reserve H.4.1** — prospective capture of dated official balance-
+   sheet releases, while refusing to treat a dated URL as authenticated proof
+   of an old vintage.
 
 FRED and ALFRED are not shortcuts for this sequence. Their current terms conflict
 with the project's software-driven recording and archival workflow; see the

@@ -25,7 +25,7 @@ from openmacrostate.runtime.connectors import (
     validate_connector_spec,
     validate_fetch_request,
 )
-from openmacrostate.runtime.http import RecordedHttpTransport
+from openmacrostate.runtime.http import LiveHttpTransport, RecordedHttpTransport
 from openmacrostate.runtime.jsonio import sha256_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -489,6 +489,16 @@ def test_spoofed_live_transport_and_malicious_connector_are_rejected(tmp_path: P
         )
 
 
+def test_live_transport_configuration_cannot_be_replaced_on_the_instance() -> None:
+    transport = LiveHttpTransport()
+    with pytest.raises(AttributeError):
+        transport._opener = object()  # type: ignore[attr-defined]
+    with pytest.raises(AttributeError):
+        transport.fetch = lambda request: None  # type: ignore[method-assign]
+    with pytest.raises(ContractError, match="timeout"):
+        LiveHttpTransport(timeout_seconds=float("nan"))
+
+
 def test_spec_with_secrets_fails_closed() -> None:
     spec = dict(FrbnySofrConnector.spec)
     spec["required_secret_names"] = ["API_TOKEN"]
@@ -652,10 +662,19 @@ def test_cli_requires_explicit_network_or_recording(tmp_path: Path, capsys) -> N
     assert "network access is never implicit" in capsys.readouterr().err
 
 
-def test_list_builtin_connectors_exposes_both_reviewed_sources() -> None:
+def test_list_builtin_connectors_exposes_all_reviewed_sources() -> None:
     from openmacrostate.connectors import list_builtin_connectors
 
     assert list_builtin_connectors() == (
+        {
+            "connector_id": "fed-h41-release",
+            "version": "0.1.0",
+            "source_name": "Board of Governors of the Federal Reserve System",
+            "allowed_hosts": ["www.federalreserve.gov"],
+            "capture_modes": ["online", "recording"],
+            "redistribution_status": "restricted",
+            "documentation_link": "https://www.federalreserve.gov/disclaimer.htm",
+        },
         {
             "connector_id": "frbny-sofr",
             "version": "0.1.0",

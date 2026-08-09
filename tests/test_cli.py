@@ -149,8 +149,10 @@ def test_connector_list_is_offline_deterministic(tmp_path: Path, monkeypatch, ca
 
     assert first == second
     assert "Built-in review trust is not a third-party sandbox." in first
+    assert "fed-h41-release v0.1.0" in first
     assert "frbny-sofr v0.1.0" in first
     assert "treasury-debt-to-penny v0.1.0" in first
+    assert "Source name: Board of Governors of the Federal Reserve System" in first
     assert "Source name: Federal Reserve Bank of New York" in first
     assert "Source name: U.S. Department of the Treasury, Bureau of the Fiscal Service" in first
     assert not tuple(tmp_path.iterdir())
@@ -161,10 +163,21 @@ def test_connector_list_json_command(capsys) -> None:
     data = json.loads(capsys.readouterr().out)
     assert data["trust_notice"] == "Built-in review trust is not a third-party sandbox."
     assert [item["connector_id"] for item in data["connectors"]] == [
+        "fed-h41-release",
         "frbny-sofr",
         "treasury-debt-to-penny",
     ]
-    treasury = data["connectors"][1]
+    h41 = data["connectors"][0]
+    assert h41 == {
+        "allowed_hosts": ["www.federalreserve.gov"],
+        "capture_modes": ["online", "recording"],
+        "connector_id": "fed-h41-release",
+        "documentation_link": "https://www.federalreserve.gov/disclaimer.htm",
+        "redistribution_status": "restricted",
+        "source_name": "Board of Governors of the Federal Reserve System",
+        "version": "0.1.0",
+    }
+    treasury = data["connectors"][2]
     assert treasury == {
         "allowed_hosts": ["api.fiscaldata.treasury.gov"],
         "capture_modes": ["online", "recording"],

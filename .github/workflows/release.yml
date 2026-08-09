@@ -55,6 +55,13 @@ jobs:
             --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
             --output build/treasury-debt-to-penny
           openmacrostate validate build/treasury-debt-to-penny
+      - name: Verify offline H.4.1 connector replay
+        run: |
+          openmacrostate connector capture fed-h41-release \
+            --start 2023-03-16 --end 2023-03-16 \
+            --recording tests/fixtures/connectors/fed_h41_release/recording.json \
+            --output build/fed-h41-release
+          openmacrostate validate build/fed-h41-release
       - name: Build distributions
         run: python -m build
       - name: Smoke-test the built wheel outside the checkout
@@ -74,10 +81,16 @@ jobs:
             --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/treasury_debt_to_penny/recording.json" \
             --output wheel-treasury
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" validate wheel-treasury
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" connector capture fed-h41-release \
+            --start 2023-03-16 --end 2023-03-16 \
+            --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/fed_h41_release/recording.json" \
+            --output wheel-h41
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" validate wheel-h41
           test -f wheel-demo/snapshot.json
           test -f wheel-demo/scores.json
           test -f wheel-sofr/collection.json
           test -f wheel-treasury/collection.json
+          test -f wheel-h41/collection.json
           popd
       - name: Verify source distribution contents
         run: |
@@ -87,6 +100,8 @@ jobs:
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/reveals/2023-banks/reveal.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/frbny_sofr/recording.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/treasury_debt_to_penny/recording.json'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/fed_h41_release/recording.json'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/fed_h41_release/response.html'
       - name: Upload candidate distributions
         uses: actions/upload-artifact@v4
         with:

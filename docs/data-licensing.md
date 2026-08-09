@@ -109,6 +109,35 @@ wire bytes, a complete official response, or an authenticated historical
 vintage. Live and recorded captures retain the endpoint, retrieval metadata,
 SHA-256 digest, license decision, source attribution, and transformation notice.
 
+### Federal Reserve Board H.4.1 dated releases
+
+Reviewed 2026-08-10. The `fed-h41-release` connector uses dated Board-authored
+H.4.1 HTML under the
+[Federal Reserve Board website disclaimer](https://www.federalreserve.gov/disclaimer.htm).
+Unless otherwise indicated, the disclaimer places information on the Board's
+website in the public domain, permits copying and distribution, and asks users
+to cite the Board as the source. The project records this source decision as:
+
+- `license_id: Federal-Reserve-Board-Public-Domain-Website-Information`;
+- artifact-level `redistribution: restricted`;
+- `commercial_use: allowed`; and
+- attribution to the Board of Governors of the Federal Reserve System.
+
+This is a page- and material-specific decision, not a claim that every item on
+the Board website is public domain. Board-authored H.4.1 table and text content
+may be copied with the Board cited, but a complete live HTML response can also
+contain site chrome, inline infrastructure scripts, external icons, trademarks,
+or third-party material. The artifact-level flag is therefore `restricted` even
+though the audited Board-authored excerpt is redistributable. The material is
+not relicensed under Apache-2.0 or labeled CC0, and source presentation may not
+imply Board endorsement.
+
+The checked-in fixture is a derived five-value HTML excerpt and has a `bundled`
+decision under this policy. Its manifest and adjacent notice label it
+`test_only_excerpt`; it is not complete response bytes or an authenticated 2023
+vintage. The full source, time, parser, and rights boundaries are documented in
+the [H.4.1 source contract](fed-h41-source-contract.md).
+
 ### FRED and ALFRED are excluded
 
 Do not use the FRED or ALFRED API, scrape their services, or commit downloaded
@@ -136,9 +165,8 @@ its information is public domain, but each page must still be checked for
 third-party material, trademarks, source attribution, and source-specific
 conditions.
 
-The planned H.4.1 connector will target dated official release material rather
-than the Board's current-only Data Download Program or a FRED/ALFRED copy. The
-Board's own
+The H.4.1 connector targets dated official release material rather than the
+Board's current-only Data Download Program or a FRED/ALFRED copy. The Board's own
 [Data Download Program help](https://www.federalreserve.gov/DataDownload/help/default.htm)
 states that the program does not provide pre-revision or real-time data. The
 [H.4.1 DDP page](https://www.federalreserve.gov/datadownload/Choose.aspx?rel=H41)
