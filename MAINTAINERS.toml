@@ -69,6 +69,7 @@ paths = [
   "src/openmacrostate/cli.py",
   "src/openmacrostate/__main__.py",
   "tests/**",
+  "docs/accounting-audit.md",
 ]
 maintainers = []
 reviewers = []

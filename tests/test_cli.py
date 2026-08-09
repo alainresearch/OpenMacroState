@@ -149,7 +149,7 @@ def test_connector_list_is_offline_deterministic(tmp_path: Path, monkeypatch, ca
 
     assert first == second
     assert "Built-in review trust is not a third-party sandbox." in first
-    assert "fed-h41-release v0.1.0" in first
+    assert "fed-h41-release v0.2.0" in first
     assert "frbny-sofr v0.1.0" in first
     assert "treasury-debt-to-penny v0.1.0" in first
     assert "Source name: Board of Governors of the Federal Reserve System" in first
@@ -175,7 +175,7 @@ def test_connector_list_json_command(capsys) -> None:
         "documentation_link": "https://www.federalreserve.gov/disclaimer.htm",
         "redistribution_status": "restricted",
         "source_name": "Board of Governors of the Federal Reserve System",
-        "version": "0.1.0",
+        "version": "0.2.0",
     }
     treasury = data["connectors"][2]
     assert treasury == {

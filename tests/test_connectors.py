@@ -668,7 +668,7 @@ def test_list_builtin_connectors_exposes_all_reviewed_sources() -> None:
     assert list_builtin_connectors() == (
         {
             "connector_id": "fed-h41-release",
-            "version": "0.1.0",
+            "version": "0.2.0",
             "source_name": "Board of Governors of the Federal Reserve System",
             "allowed_hosts": ["www.federalreserve.gov"],
             "capture_modes": ["online", "recording"],

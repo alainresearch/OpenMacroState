@@ -88,6 +88,10 @@ jobs:
             --recording tests/fixtures/connectors/fed_h41_release/recording.json \
             --output build/fed-h41-release
           openmacrostate validate build/fed-h41-release
+          openmacrostate audit accounting build/fed-h41-release \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --json
       - name: Upload replay artifacts
         uses: actions/upload-artifact@v7
         with:

@@ -132,7 +132,7 @@ though the audited Board-authored excerpt is redistributable. The material is
 not relicensed under Apache-2.0 or labeled CC0, and source presentation may not
 imply Board endorsement.
 
-The checked-in fixture is a derived five-value HTML excerpt and has a `bundled`
+The checked-in fixture is a derived seven-value HTML excerpt and has a `bundled`
 decision under this policy. Its manifest and adjacent notice label it
 `test_only_excerpt`; it is not complete response bytes or an authenticated 2023
 vintage. The full source, time, parser, and rights boundaries are documented in

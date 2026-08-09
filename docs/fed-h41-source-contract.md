@@ -1,6 +1,6 @@
 # Federal Reserve H.4.1 dated-release source contract
 
-Status: implemented by connector ruleset `fed-h41-release-normalization/1`.
+Status: implemented by connector ruleset `fed-h41-release-normalization/3`.
 
 This contract defines what the first H.4.1 connector may retrieve, what it may
 normalize, and—most importantly—what it may not claim about historical
@@ -16,7 +16,7 @@ https://www.federalreserve.gov/releases/h41/YYYYMMDD/h41.htm
 
 It permits only HTTPS on `www.federalreserve.gov`, uses no query, fragment,
 credentials, redirect, secret, mirror, or fallback, and accepts at most 2 MiB of
-`text/html`. `--start` and `--end` must be the same date. Ruleset 1 supports
+`text/html`. `--start` and `--end` must be the same date. Ruleset 3 supports
 releases on or after 2021-08-12, the first audited archive date using the current
 `t#r#c#` cell-ID structure. An earlier layout needs a separate parser ruleset.
 
@@ -29,7 +29,7 @@ never copied into `released_at`.
 
 ## Selected observations
 
-Ruleset 1 reads five reported Wednesday stock values. It locates rows by a table
+Ruleset 3 reads seven reported Wednesday stock values. It locates rows by a table
 prefix and unique exact label, then requires the value cell to be bound to the
 table's `Wednesday` header. Row numbers are deliberately not fixed because the
 Board can add or remove lines.
@@ -37,6 +37,8 @@ Board can add or remove lines.
 | Series | Source table and row | Value column | Unit |
 | --- | --- | --- | --- |
 | `fed.h41.total_assets` | Table 5, `Total assets` | Wednesday | `USD_million` |
+| `fed.h41.total_liabilities` | Table 5 continued, `Total liabilities` | Wednesday | `USD_million` |
+| `fed.h41.total_capital` | Table 5 continued, `Total capital` | Wednesday | `USD_million` |
 | `fed.h41.securities_held_outright` | Table 1, `Securities held outright` | Wednesday | `USD_million` |
 | `fed.h41.primary_credit` | Table 1, `Primary credit` | Wednesday | `USD_million` |
 | `fed.h41.treasury_general_account` | Table 1 continued, `U.S. Treasury, General Account` | Wednesday | `USD_million` |
@@ -44,12 +46,19 @@ Board can add or remove lines.
 
 The unit immediately preceding each selected table must be exactly `Millions of
 dollars`. Values must be non-negative ASCII integers with valid source grouping;
-the normalizer removes commas but does not rescale the number. The four selected
-components may not exceed total assets. It does not require components to sum
-exactly: the release itself warns that components may differ from totals because
-of rounding, and the selected lines are not an exhaustive accounting identity.
+the normalizer removes commas but does not rescale the number. The selected
+diagnostic components may not exceed total assets, but they are not exhaustive
+and are not added together. All seven observations carry provisional boundary,
+side, and role metadata for the separate fixed
+[`fed-h41-balance-sheet-v1` audit](accounting-audit.md), which allows an exact
+1 `USD_million` residual for reported whole-million rounding.
 
-The parser fails closed on a missing or duplicate release statement, path/body
+Each selected table, its heading, and its unit must share one immediate plain
+`div` parent without attributes. Closed `details` and `dialog` ancestors, HTML
+hidden semantics, and supported inline hidden styles are excluded. This is a
+semantic-DOM contract, not a browser rendering engine: it does not fetch
+stylesheets or claim to resolve arbitrary CSS selectors and computed
+visibility. The parser fails closed on a missing or duplicate release statement, path/body
 date mismatch, future release date, inconsistent Wednesday headers, wrong unit,
 duplicate or missing cell/row, near-match label, wrong value column, invalid
 number, unsupported DOM, or malformed UTF-8. A cover-note table or changed row
@@ -89,7 +98,7 @@ The current Data Download Program and current XML package are excluded because
 they do not provide a dated artifact version. The Board's
 [Data Download help](https://www.federalreserve.gov/datadownload/help/)
 states that pre-revision or real-time data are not available. PDF is also
-excluded from ruleset 1; there is no silent format or source fallback.
+excluded from ruleset 3; there is no silent format or source fallback.
 
 ## Rights and fixture decision
 
@@ -111,7 +120,7 @@ artifact is conservatively marked `restricted`. The source material is not
 relabeled CC0 or Apache-2.0, and neither capture nor transformation may imply
 Board endorsement.
 
-The checked-in March 16, 2023 fixture contains five real reported values in a
+The checked-in March 16, 2023 fixture contains seven real reported values in a
 small derived HTML document. Its recording is labeled `test_only_excerpt`; it is
 not complete response bytes or an authenticated 2023 vintage. Its adjacent
 `NOTICE.md` is part of the fixture's rights and provenance boundary.
