@@ -5,11 +5,12 @@ decide whether an observation is eligible for a historical cutoff, and they do
 not own networking, hashing, or case output. Those controls remain in the core
 runtime.
 
-The first two official-source vertical slices are `frbny-sofr`, for the Federal
-Reserve Bank of New York's Secured Overnight Financing Rate (SOFR), and
-`treasury-debt-to-penny`, for total U.S. public debt outstanding. They are
-pre-alpha **prospective-capture** connectors, not proof that OpenMacroState held
-an old source vintage when its value date occurred.
+The first three official-source vertical slices are `frbny-sofr`, for the
+Federal Reserve Bank of New York's Secured Overnight Financing Rate (SOFR),
+`treasury-debt-to-penny`, for total U.S. public debt outstanding, and
+`fed-h41-release`, for a dated Federal Reserve Board balance-sheet release. They
+are pre-alpha **prospective-capture** connectors, not proof that OpenMacroState
+held an old source vintage when its value date occurred.
 
 > **Pre-alpha status:** this command contract is implemented on the current
 > development tree but may change before a stable release. Command help in the
@@ -58,7 +59,8 @@ oms connector list --json
 The command reports each review-trusted connector's ID, version, source name,
 allowed hosts, capture modes, redistribution status, and source-policy link. It
 also repeats the boundary that review trust is not a third-party sandbox. The
-current list contains both `frbny-sofr` and `treasury-debt-to-penny`.
+current list contains `fed-h41-release`, `frbny-sofr`, and
+`treasury-debt-to-penny`.
 
 ## Recorded and online modes
 
@@ -73,7 +75,7 @@ If neither flag is present, or both are present, capture fails closed. Online
 capture does not accept a user-supplied URL. Each built-in constructs its own
 bounded official endpoint from validated start and end dates. SOFR permits only
 `markets.newyorkfed.org`; Debt to the Penny permits only
-`api.fiscaldata.treasury.gov`.
+`api.fiscaldata.treasury.gov`; H.4.1 permits only `www.federalreserve.gov`.
 
 A recording manifest can truthfully report what its recorder claims, but its
 `retrieved_at` value is self-asserted metadata. Byte length and SHA-256 prove
@@ -107,6 +109,19 @@ oms connector capture treasury-debt-to-penny \
   --output build/treasury-debt-to-penny-capture
 
 oms validate build/treasury-debt-to-penny-capture
+```
+
+The dated H.4.1 fixture uses equal start and end values because one capture is
+one release artifact:
+
+```bash
+oms connector capture fed-h41-release \
+  --start 2023-03-16 \
+  --end 2023-03-16 \
+  --recording tests/fixtures/connectors/fed_h41_release/recording.json \
+  --output build/fed-h41-release-capture
+
+oms validate build/fed-h41-release-capture
 ```
 
 An intentional live capture is:
@@ -278,6 +293,32 @@ Treasury-generated data records captured here. It does not label them CC0 or
 Apache-2.0, grant rights in trademarks or third-party material, or imply
 Treasury endorsement.
 
+## Federal Reserve H.4.1 dated-release source
+
+The `fed-h41-release` connector constructs one dated Board HTML URL from equal
+`--start` and `--end` release dates. Ruleset 1 supports the audited current DOM
+era from 2021-08-12 onward. It selects five Wednesday stock values: total assets,
+securities held outright, primary credit, the Treasury General Account, and
+reserve balances. Each remains in the reported `USD_million` unit.
+
+The parser binds unique exact row labels to exact table prefixes and the
+`Wednesday` value column. Each selected table must immediately follow its exact
+heading and `Millions of dollars` unit paragraphs under one parent, and each
+value header must resolve to real header cells in the same table. It does not
+use the first number, a fixed row number, or HTML table ordinal. Wrong units,
+hidden or detached semantic context, duplicate IDs or rows, date mismatch,
+future dates, malformed values, and unsupported structure fail closed.
+
+The release path date and Wednesday observation date are source claims, not
+availability timestamps. `released_at`, `vintage_at`, and `ingested_at` use the
+core capture or replay wall-clock; `source_published_at` remains unknown. A
+dated URL can be corrected later, so every capture remains prospective and
+`historical_evidence=false` without independent cutoff-time authentication.
+
+The exact source, parser, time, exclusion, fixture, and rights decisions are in
+the [H.4.1 source contract](fed-h41-source-contract.md). The connector does not
+fall back to DDP, current XML, PDF, FRED, or a mirror.
+
 ## Source and license requirements
 
 FRBNY reference-rate content is subject to the New York Fed
@@ -290,6 +331,12 @@ Treasury Debt to the Penny captures use the source decision documented above
 and in the [data-license policy](data-licensing.md). Generated bundles retain
 the source, terms URL, review date, and non-endorsement boundary next to the
 data and normalized observations.
+
+Federal Reserve Board H.4.1 captures use the page-level public-domain decision
+documented in the [H.4.1 source contract](fed-h41-source-contract.md). It covers
+only the audited Board-authored table and text content, excludes seals, logos,
+trademarks, and third-party material, retains Board attribution, and does not
+imply endorsement.
 
 Do not replace this direct official source with FRED or ALFRED. Their useful
 vintage interface does not override their current terms or third-party rights;

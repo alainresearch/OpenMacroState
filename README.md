@@ -3,7 +3,7 @@
 [![CI](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml/badge.svg)](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml)
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue.svg)](https://www.python.org/)
 [![Code/docs: Apache-2.0](https://img.shields.io/badge/code%20%26%20docs-Apache--2.0-blue.svg)](LICENSE)
-[![Pre-release: v0.1.0a3](https://img.shields.io/badge/pre--release-v0.1.0a3-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a3)
+[![Pre-release: v0.1.0a4](https://img.shields.io/badge/pre--release-v0.1.0a4-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a4)
 
 **An auditable, point-in-time operating system for global macro research.**
 
@@ -40,9 +40,10 @@ flowchart LR
 ```
 
 OpenMacroState is not another chart terminal and does not claim to predict
-markets. Its first two official-source pre-alpha vertical slices are the New York
-Fed SOFR connector, `frbny-sofr`, and the U.S. Treasury Debt to the Penny
-connector, `treasury-debt-to-penny`. Both are deliberately conservative:
+markets. Its first three official-source pre-alpha vertical slices are the New
+York Fed SOFR connector, `frbny-sofr`, the U.S. Treasury Debt to the Penny
+connector, `treasury-debt-to-penny`, and the Federal Reserve Board dated H.4.1
+connector, `fed-h41-release`. All are deliberately conservative:
 historical values retrieved today do not become evidence that the system had
 captured them in the past. Replaying a recording with an old `retrieved_at`
 claim does not restore past availability either: without an authenticated proof,
@@ -54,17 +55,17 @@ the core uses the current replay time for eligibility. See the
 OpenMacroState is in **pre-alpha development**. Interfaces, schemas, and bundled
 cases may change before the first stable release. Today the repository provides
 a public research contract, versioned interchange schemas, public plugin
-protocols, an executable offline validator/demo, and two pre-alpha
+protocols, an executable offline validator/demo, and three pre-alpha
 official-source capture paths. These connectors are not stable historical
 evidence packs. The repository still does **not** ship a production model adapter
 or a reviewed real historical replay, and it is not a production trading or
 policy system.
 
-The current public pre-release is [v0.1.0a3](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a3).
+The current public pre-release is [v0.1.0a4](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a4).
 Its wheel and source archive are available from GitHub Releases only;
 OpenMacroState has not been published to PyPI. To help shape the next milestone,
 review the Draft [2023 banking-stress replay RFC](https://github.com/alainresearch/OpenMacroState/pull/18)
-or contribute to the [Federal Reserve H.4.1 connector](https://github.com/alainresearch/OpenMacroState/issues/9).
+or claim the scoped [`inspect-recording` good first issue](https://github.com/alainresearch/OpenMacroState/issues/14).
 
 ## Five-minute synthetic demo
 
@@ -148,6 +149,25 @@ authenticated 2026 historical vintage. The live connector fixes the official
 host, selected fields, encoded date filter, ascending sort, JSON format, and a
 single bounded page; it rejects empty, truncated, same-day, future, malformed,
 or out-of-order results.
+
+The third connector captures one dated Federal Reserve Board H.4.1 balance-sheet
+release. Equal start and end values identify the release artifact:
+
+```bash
+openmacrostate connector capture fed-h41-release \
+  --start 2023-03-16 --end 2023-03-16 \
+  --recording tests/fixtures/connectors/fed_h41_release/recording.json \
+  --output build/fed-h41-release
+openmacrostate validate build/fed-h41-release
+```
+
+The fixture produces five `USD_million` Wednesday observations: total assets,
+securities held outright, primary credit, the Treasury General Account, and
+reserve balances. It is a small `test_only_excerpt`, not the full official page
+or an authenticated 2023 vintage. The parser selects exact semantic rows and the
+Wednesday stock column rather than a table position, and it rejects date, unit,
+column, row, number, and DOM drift. See the dedicated
+[H.4.1 source contract](docs/fed-h41-source-contract.md).
 
 ## The problem it addresses
 

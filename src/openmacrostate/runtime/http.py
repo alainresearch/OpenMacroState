@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import ssl
 import urllib.error
 import urllib.request
@@ -46,13 +47,18 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 class LiveHttpTransport:
     """Minimal no-proxy HTTPS client. Network use must be selected by the CLI."""
 
+    __slots__ = ("_timeout_seconds",)
+
     def __init__(self, *, timeout_seconds: float = 20.0) -> None:
-        self._timeout_seconds = timeout_seconds
-        self._opener = urllib.request.build_opener(
-            urllib.request.ProxyHandler({}),
-            urllib.request.HTTPSHandler(context=ssl.create_default_context()),
-            _NoRedirect(),
-        )
+        if (
+            isinstance(timeout_seconds, bool)
+            or not isinstance(timeout_seconds, (int, float))
+            or not math.isfinite(timeout_seconds)
+            or timeout_seconds <= 0
+            or timeout_seconds > 120
+        ):
+            raise ContractError("live HTTP timeout must be finite and between 0 and 120 seconds")
+        self._timeout_seconds = float(timeout_seconds)
 
     def fetch(self, request: FetchRequest) -> TransportResponse:
         wire_request = urllib.request.Request(
@@ -64,8 +70,16 @@ class LiveHttpTransport:
             },
             method=request.method,
         )
+        # Build the no-proxy, verified-TLS opener inside the core-owned fetch path.
+        # Keeping an opener on the instance would let callers replace it while the
+        # runner still classified this exact transport type as authenticated live I/O.
+        opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({}),
+            urllib.request.HTTPSHandler(context=ssl.create_default_context()),
+            _NoRedirect(),
+        )
         try:
-            with self._opener.open(wire_request, timeout=self._timeout_seconds) as response:
+            with opener.open(wire_request, timeout=self._timeout_seconds) as response:
                 content_length = response.headers.get("Content-Length")
                 if content_length is not None:
                     try:

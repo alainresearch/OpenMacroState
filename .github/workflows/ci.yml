@@ -81,6 +81,13 @@ jobs:
             --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
             --output build/treasury-debt-to-penny
           openmacrostate validate build/treasury-debt-to-penny
+      - name: Replay the H.4.1 connector fixture offline
+        run: |
+          openmacrostate connector capture fed-h41-release \
+            --start 2023-03-16 --end 2023-03-16 \
+            --recording tests/fixtures/connectors/fed_h41_release/recording.json \
+            --output build/fed-h41-release
+          openmacrostate validate build/fed-h41-release
       - name: Upload replay artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -89,4 +96,5 @@ jobs:
             build/demo
             build/frbny-sofr
             build/treasury-debt-to-penny
+            build/fed-h41-release
           if-no-files-found: error

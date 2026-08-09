@@ -1,5 +1,5 @@
 format_version = 1
-last_updated = "2026-08-09"
+last_updated = "2026-08-10"
 
 [project]
 name = "OpenMacroState"
@@ -69,6 +69,19 @@ paths = [
   "src/openmacrostate/cli.py",
   "src/openmacrostate/__main__.py",
   "tests/**",
+]
+maintainers = []
+reviewers = []
+status = "seeking-maintainers"
+
+[[areas]]
+id = "official-source-connectors"
+paths = [
+  "src/openmacrostate/connectors/**",
+  "tests/fixtures/connectors/**",
+  "docs/connectors.md",
+  "docs/data-licensing.md",
+  "docs/*-source-contract.md",
 ]
 maintainers = []
 reviewers = []
