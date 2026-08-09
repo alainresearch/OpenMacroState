@@ -35,7 +35,7 @@ dependencies = [
 dev = [
   "build>=1.2,<2",
   "jsonschema>=4.21,<5",
-  "pytest>=8,<9",
+  "pytest>=8,<10",
   "ruff>=0.12,<1"
 ]
 
