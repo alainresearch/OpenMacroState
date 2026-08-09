@@ -1,7 +1,7 @@
 # RFC 0001: Evidence-reviewed 2023 US banking-stress replay
 
 - Status: Draft
-- Authors: OpenMacroState contributors
+- Authors: @alainresearch (with disclosed AI assistance)
 - Shepherd: Unassigned
 - Created: 2026-08-10
 - Discussion: [GitHub Issue #11](https://github.com/alainresearch/OpenMacroState/issues/11)
@@ -334,6 +334,14 @@ Adoption has three stages:
    pull request only after the RFC decision, while keeping
    `historical_evidence: false`; and
 3. add the case/reveal pair only after all release gates pass.
+
+The `replay-cases` area has no registered Maintainer or Reviewer during project
+bootstrap. Under the [governance bootstrap exception](../../GOVERNANCE.md), the
+interim Project Lead must use the same public process, seek the strongest
+available independent macro, provenance, and licensing review, and may not waive
+those requirements.
+The formal comment clock begins only after the shepherd and start timestamp are
+recorded on the pull request; opening the Draft alone does not start that clock.
 
 At any stage, a rights change, provenance failure, or newly discovered revision
 can demote an artifact to `fetch_only` or `reference_only`, quarantine it, and
