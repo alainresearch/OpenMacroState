@@ -27,6 +27,18 @@ jobs:
           python -m ruff format --check .
       - name: Test
         run: pytest
+      - name: Verify release tag matches package version
+        if: github.ref_type == 'tag'
+        run: |
+          python - <<'PY'
+          import os
+          from openmacrostate import __version__
+
+          actual = os.environ["GITHUB_REF_NAME"]
+          expected = f"v{__version__}"
+          if actual != expected:
+              raise SystemExit(f"release tag {actual!r} must equal {expected!r}")
+          PY
       - name: Verify offline demo
         run: openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
       - name: Verify offline SOFR connector replay
@@ -36,6 +48,13 @@ jobs:
             --recording tests/fixtures/connectors/frbny_sofr/recording.json \
             --output build/frbny-sofr
           openmacrostate validate build/frbny-sofr
+      - name: Verify offline Treasury connector replay
+        run: |
+          openmacrostate connector capture treasury-debt-to-penny \
+            --start 2026-08-05 --end 2026-08-06 \
+            --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
+            --output build/treasury-debt-to-penny
+          openmacrostate validate build/treasury-debt-to-penny
       - name: Build distributions
         run: python -m build
       - name: Smoke-test the built wheel outside the checkout
@@ -50,9 +69,15 @@ jobs:
             --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/frbny_sofr/recording.json" \
             --output wheel-sofr
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" validate wheel-sofr
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" connector capture treasury-debt-to-penny \
+            --start 2026-08-05 --end 2026-08-06 \
+            --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/treasury_debt_to_penny/recording.json" \
+            --output wheel-treasury
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" validate wheel-treasury
           test -f wheel-demo/snapshot.json
           test -f wheel-demo/scores.json
           test -f wheel-sofr/collection.json
+          test -f wheel-treasury/collection.json
           popd
       - name: Verify source distribution contents
         run: |
@@ -60,6 +85,8 @@ jobs:
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/schemas/v1/collection.schema.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/cases/2023-banks/case.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/reveals/2023-banks/reveal.json'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/frbny_sofr/recording.json'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/treasury_debt_to_penny/recording.json'
       - name: Upload candidate distributions
         uses: actions/upload-artifact@v4
         with:

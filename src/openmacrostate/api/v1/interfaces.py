@@ -5,7 +5,12 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any, Protocol
 
-from openmacrostate.api.v1.connector_types import FetchRequest, FrozenArtifact, ObservationDraft
+from openmacrostate.api.v1.connector_types import (
+    CaptureBundleMetadata,
+    FetchRequest,
+    FrozenArtifact,
+    ObservationDraft,
+)
 
 
 class Connector(Protocol):
@@ -18,6 +23,7 @@ class Connector(Protocol):
 
     spec: Mapping[str, Any]
     ruleset_version: str
+    bundle_metadata: CaptureBundleMetadata
 
     def plan(self, request: Mapping[str, Any]) -> tuple[FetchRequest, ...]: ...
 

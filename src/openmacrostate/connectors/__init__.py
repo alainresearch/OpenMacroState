@@ -11,8 +11,12 @@ from typing import Any
 from openmacrostate.api.v1.errors import ContractError
 from openmacrostate.api.v1.interfaces import Connector
 from openmacrostate.connectors.frbny_sofr import FrbnySofrConnector
+from openmacrostate.connectors.treasury_debt_to_penny import TreasuryDebtToPennyConnector
 
-_BUILTINS = {"frbny-sofr": FrbnySofrConnector}
+_BUILTINS = {
+    "frbny-sofr": FrbnySofrConnector,
+    "treasury-debt-to-penny": TreasuryDebtToPennyConnector,
+}
 
 
 def builtin_connector_ids() -> tuple[str, ...]:
@@ -32,6 +36,7 @@ def is_builtin_connector_instance(connector: object) -> bool:
 
 
 def list_builtin_connectors() -> tuple[dict[str, Any], ...]:
+    """Return deterministic public metadata without opening a network connection."""
     from openmacrostate.runtime.connectors import validate_connector_spec
 
     result: list[dict[str, Any]] = []

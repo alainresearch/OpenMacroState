@@ -38,12 +38,18 @@ The Release Manager:
      --recording tests/fixtures/connectors/frbny_sofr/recording.json \
      --output build/frbny-sofr
    openmacrostate validate build/frbny-sofr
+   openmacrostate connector capture treasury-debt-to-penny \
+     --start 2026-08-05 --end 2026-08-06 \
+     --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
+     --output build/treasury-debt-to-penny
+   openmacrostate validate build/treasury-debt-to-penny
    python -m build
    ```
 
 5. installs the built wheel into an empty environment outside the checkout and
    runs both `openmacrostate example 2023-banks --output wheel-demo` and the
-   bundled offline SOFR recording through the installed connector and validator;
+   bundled offline SOFR and Treasury recordings through the installed connectors
+   and validator;
 6. confirms the source distribution contains `schemas/`, `cases/`, and
    `reveals/` rather than testing only an editable checkout;
 7. inspects the demo manifest and distributions rather than relying only on a

@@ -3,7 +3,7 @@
 This roadmap communicates direction, not a delivery promise. Scope and sequencing
 may change after public review. A version ships only when its release gates pass.
 
-Status markers describe the repository on 2026-08-09:
+Status markers describe the repository on 2026-08-10:
 
 - ✅ implemented and covered by the current pre-alpha contract;
 - 🚧 in active implementation or review;
@@ -31,6 +31,9 @@ Capability status:
 - ✅ contributor, governance, security, and data-license foundations;
 - ✅ the first official-source connector, `frbny-sofr`, with recorded/offline
   replay, explicit online capture, and conservative SOFR vintage semantics;
+- ✅ the second official-source connector, `treasury-debt-to-penny`, with a
+  fixed single-page Debt to the Penny query, offline replay, and conservative
+  release/vintage semantics;
 - ⬜ accounting-identity and accounting-invariant tests; and
 - ⬜ at least one polished, evidence-reviewed historical replay in addition to
   the synthetic `2023-banks` fixture.
@@ -39,8 +42,8 @@ The official-source sequence is intentionally narrow:
 
 1. ✅ **New York Fed SOFR** — prospective capture of the secured overnight
    dollar funding rate from a date-bounded official endpoint;
-2. ⏭ **Treasury Fiscal Data** — Treasury debt or cash-state observations after
-   point-in-time and source-license review; and
+2. ✅ **Treasury Fiscal Data** — prospective capture of total public debt
+   outstanding through a fixed, field-selected Debt to the Penny query; and
 3. ⏭ **Federal Reserve H.4.1** — dated official releases for the Fed balance
    sheet, avoiding current-only feeds that cannot prove a historical vintage.
 
@@ -58,10 +61,10 @@ Release gates:
   decision;
 - [x] replay fails closed on evidence later than the cutoff;
 - [x] output is deterministic except for declared nondeterministic metadata;
-- [x] the first official connector passes source, security, time-semantics,
+- [x] the bundled official connectors pass source, security, time-semantics,
   license, fixture, and offline-replay review;
 - [ ] one real historical replay passes independent evidence review; and
-- [ ] a new contributor completes one scoped Issue using only public
+- [x] a new contributor completes one scoped Issue using only public
   documentation and maintainer review.
 
 ## v0.2 — Dollar State Engine

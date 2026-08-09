@@ -42,10 +42,10 @@ When in doubt, choose `blocked` or `fetch_only` and request license review.
 
 ## Reviewed source decisions
 
-These decisions are project policy based on the linked terms as reviewed on
-2026-08-09. They are not a declaration that an entire institution's website has
-one license. Recheck the terms and the specific source page before expanding a
-connector.
+These decisions are project policy based on the linked terms as reviewed on the
+date recorded for each source. They are not a declaration that an entire
+institution's website has one license. Recheck the terms and the specific source
+page before expanding a connector.
 
 ### New York Fed Markets API and SOFR
 
@@ -78,6 +78,36 @@ The authoritative economic and revision semantics remain in the New York Fed's
 and
 [publication and revision rules](https://www.newyorkfed.org/markets/reference-rates/additional-information-about-reference-rates).
 The connector contract is documented in [connectors.md](connectors.md).
+
+### U.S. Treasury Fiscal Data — Debt to the Penny
+
+Reviewed 2026-08-10. The `treasury-debt-to-penny` connector uses the official
+[Debt to the Penny dataset](https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/debt-to-the-penny)
+under the
+[Treasury Fiscal Data API documentation and Open Data Policy](https://fiscaldata.treasury.gov/api-documentation/).
+That policy states that Fiscal Data data is offered free, without restriction,
+and may be copied, adapted, redistributed, or otherwise used for non-commercial
+or commercial purposes. The project records this source decision as:
+
+- `license_id: US-Treasury-Fiscal-Data-Open-Data`;
+- `redistribution: allowed`;
+- `commercial_use: allowed`; and
+- source attribution retained for provenance, not represented as a stated
+  license condition.
+
+This decision is deliberately narrower than declaring all Treasury content
+public domain or unrestricted in every respect. It applies to the
+Treasury-generated Debt to the Penny data records captured from the reviewed
+endpoint. It does not relicense trademarks or third-party material, and neither
+the source note nor a normalized observation may imply Treasury endorsement.
+The data is not labeled CC0 and is not relicensed under Apache-2.0.
+
+The checked-in two-row fixture has a `bundled` decision under this policy. It
+contains real values but was reserialized, so both its recording manifest and
+adjacent notice label it `test_only_excerpt`. It must not be described as exact
+wire bytes, a complete official response, or an authenticated historical
+vintage. Live and recorded captures retain the endpoint, retrieval metadata,
+SHA-256 digest, license decision, source attribution, and transformation notice.
 
 ### FRED and ALFRED are excluded
 

@@ -85,8 +85,16 @@ def _parser() -> argparse.ArgumentParser:
         "capture", help="write a new, complete capture case without overwriting"
     )
     capture.add_argument("connector_id", choices=builtin_connector_ids())
-    capture.add_argument("--start", required=True, help="inclusive value date, YYYY-MM-DD")
-    capture.add_argument("--end", required=True, help="inclusive value date, YYYY-MM-DD")
+    capture.add_argument(
+        "--start",
+        required=True,
+        help="inclusive source date, YYYY-MM-DD; semantics are connector-specific",
+    )
+    capture.add_argument(
+        "--end",
+        required=True,
+        help="inclusive source date, YYYY-MM-DD; semantics are connector-specific",
+    )
     capture_mode = capture.add_mutually_exclusive_group()
     capture_mode.add_argument("--recording", type=Path, help="replay an exact recorded response")
     capture_mode.add_argument(

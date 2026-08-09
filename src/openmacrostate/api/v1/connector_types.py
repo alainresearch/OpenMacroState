@@ -18,6 +18,19 @@ class FetchRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class CaptureBundleMetadata:
+    """Connector-owned presentation and source-rights text for a capture bundle.
+
+    The core validates these values, binds them into capture identity, and remains
+    solely responsible for choosing output paths and writing files.
+    """
+
+    title: str
+    fixture_kind: str
+    source_notice: str
+
+
+@dataclass(frozen=True, slots=True)
 class TransportResponse:
     """Bytes and minimal provenance returned by a core-owned transport."""
 

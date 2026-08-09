@@ -8,7 +8,13 @@ from types import MappingProxyType
 
 import pytest
 
-from openmacrostate.api.v1.connector_types import FetchRequest, FrozenArtifact, TransportResponse
+from openmacrostate.api.v1 import CaptureBundleMetadata as PublicCaptureBundleMetadata
+from openmacrostate.api.v1.connector_types import (
+    CaptureBundleMetadata,
+    FetchRequest,
+    FrozenArtifact,
+    TransportResponse,
+)
 from openmacrostate.api.v1.errors import ContractError
 from openmacrostate.api.v1.types import Observation, parse_timestamp
 from openmacrostate.cli import main
@@ -26,6 +32,10 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "connectors" / "frbny_sofr"
 RECORDING = FIXTURE / "recording.json"
 CORE_TIME = "2026-08-09T15:30:00Z"
+
+
+def test_public_v1_exports_capture_bundle_metadata() -> None:
+    assert PublicCaptureBundleMetadata is CaptureBundleMetadata
 
 
 def _clock() -> str:
@@ -204,7 +214,7 @@ def test_backdated_receipt_claim_cannot_backdate_knowledge_time(tmp_path: Path) 
     assert collection["source_authentication"] == "unverified_recording"
 
 
-def test_capture_identity_binds_recording_claim_receipt_and_plugin_version(
+def test_capture_identity_binds_recording_receipt_plugin_and_bundle_metadata(
     tmp_path: Path, monkeypatch
 ) -> None:
     complete_recording = _recording_copy(tmp_path, "complete", recording_kind="complete_response")
@@ -224,6 +234,24 @@ def test_capture_identity_binds_recording_claim_receipt_and_plugin_version(
         tmp_path / "different-receipt",
         clock=_clock,
     )
+    original_metadata = FrbnySofrConnector.bundle_metadata
+    monkeypatch.setattr(
+        FrbnySofrConnector,
+        "bundle_metadata",
+        CaptureBundleMetadata(
+            title=original_metadata.title,
+            fixture_kind=original_metadata.fixture_kind,
+            source_notice=original_metadata.source_notice + "\n\nReviewed source notice revision.",
+        ),
+    )
+    different_metadata = run_connector(
+        FrbnySofrConnector(),
+        {"start": "2023-03-22", "end": "2023-03-22"},
+        RecordedHttpTransport(RECORDING),
+        tmp_path / "different-metadata",
+        clock=_clock,
+    )
+    monkeypatch.setattr(FrbnySofrConnector, "bundle_metadata", original_metadata)
     modified_spec = dict(FrbnySofrConnector.spec)
     modified_spec["plugin_version"] = "0.1.1"
     monkeypatch.setattr(FrbnySofrConnector, "spec", MappingProxyType(modified_spec))
@@ -235,13 +263,52 @@ def test_capture_identity_binds_recording_claim_receipt_and_plugin_version(
         clock=_clock,
     )
 
-    captures = (baseline, different_kind, different_receipt, different_version)
-    assert len({capture.case_id for capture in captures}) == 4
-    assert len({capture.collection_id for capture in captures}) == 4
+    captures = (
+        baseline,
+        different_kind,
+        different_receipt,
+        different_metadata,
+        different_version,
+    )
+    assert len({capture.case_id for capture in captures}) == 5
+    assert len({capture.collection_id for capture in captures}) == 5
     assert len({capture.artifact_id for capture in captures}) == 1
+    assert len(baseline.case_id.rsplit("-", 1)[-1]) == 32
+    assert len(baseline.collection_id.rsplit(":", 1)[-1]) == 32
     collection = json.loads((baseline.case_dir / "collection.json").read_text(encoding="utf-8"))
     assert len(collection["normalized_observations_sha256"]) == 64
     assert collection["connector_ruleset_version"] == "frbny-sofr-normalization/3"
+    assert collection["capture_ruleset_version"] == "openmacrostate-connector-capture/3"
+
+
+def test_invalid_bundle_metadata_fails_before_output(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        FrbnySofrConnector,
+        "bundle_metadata",
+        CaptureBundleMetadata(
+            title="FRBNY SOFR\nforged title",
+            fixture_kind="licensed_public",
+            source_notice="notice",
+        ),
+    )
+    output = tmp_path / "capture"
+
+    with pytest.raises(ContractError, match="title"):
+        _capture(output)
+    assert not output.exists()
+
+
+def test_future_license_review_time_fails_before_output(tmp_path: Path, monkeypatch) -> None:
+    modified_spec = dict(FrbnySofrConnector.spec)
+    modified_license = dict(modified_spec["license"])
+    modified_license["reviewed_at"] = "2099-01-01T00:00:00Z"
+    modified_spec["license"] = modified_license
+    monkeypatch.setattr(FrbnySofrConnector, "spec", MappingProxyType(modified_spec))
+    output = tmp_path / "capture"
+
+    with pytest.raises(ContractError, match="license reviewed_at"):
+        _capture(output)
+    assert not output.exists()
 
 
 def test_recording_future_time_claim_fails_closed(tmp_path: Path) -> None:
@@ -585,18 +652,39 @@ def test_cli_requires_explicit_network_or_recording(tmp_path: Path, capsys) -> N
     assert "network access is never implicit" in capsys.readouterr().err
 
 
-def test_list_builtin_connectors() -> None:
+def test_list_builtin_connectors_exposes_both_reviewed_sources() -> None:
     from openmacrostate.connectors import list_builtin_connectors
 
-    info_list = list_builtin_connectors()
-    assert isinstance(info_list, tuple)
-    frbny = next(c for c in info_list if c["connector_id"] == "frbny-sofr")
-    assert frbny == {
-        "connector_id": "frbny-sofr",
-        "version": "0.1.0",
-        "source_name": "Federal Reserve Bank of New York",
-        "allowed_hosts": ["markets.newyorkfed.org"],
-        "capture_modes": ["online", "recording"],
-        "redistribution_status": "restricted",
-        "documentation_link": "https://www.newyorkfed.org/privacy/termsofuse.html",
-    }
+    assert list_builtin_connectors() == (
+        {
+            "connector_id": "frbny-sofr",
+            "version": "0.1.0",
+            "source_name": "Federal Reserve Bank of New York",
+            "allowed_hosts": ["markets.newyorkfed.org"],
+            "capture_modes": ["online", "recording"],
+            "redistribution_status": "restricted",
+            "documentation_link": "https://www.newyorkfed.org/privacy/termsofuse.html",
+        },
+        {
+            "connector_id": "treasury-debt-to-penny",
+            "version": "0.1.0",
+            "source_name": ("U.S. Department of the Treasury, Bureau of the Fiscal Service"),
+            "allowed_hosts": ["api.fiscaldata.treasury.gov"],
+            "capture_modes": ["online", "recording"],
+            "redistribution_status": "allowed",
+            "documentation_link": "https://fiscaldata.treasury.gov/api-documentation/",
+        },
+    )
+
+
+def test_listing_connectors_does_not_change_capture_identity(tmp_path: Path) -> None:
+    from openmacrostate.connectors import list_builtin_connectors
+
+    baseline = _capture(tmp_path / "baseline")
+    list_builtin_connectors()
+    after_listing = _capture(tmp_path / "after-listing")
+
+    assert after_listing.case_id == baseline.case_id
+    assert after_listing.collection_id == baseline.collection_id
+    assert after_listing.artifact_id == baseline.artifact_id
+    assert after_listing.observation_ids == baseline.observation_ids
