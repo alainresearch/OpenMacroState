@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/snapshot.schema.json",
+  "title": "OpenMacroState Frozen Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "snapshot_id",
+    "case_id",
+    "information_cutoff",
+    "created_at",
+    "observation_ids",
+    "content_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "snapshot_id": {"type": "string", "minLength": 2},
+    "case_id": {"type": "string", "minLength": 2},
+    "information_cutoff": {"type": "string", "format": "date-time"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "observation_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "extensions": {"type": "object", "additionalProperties": true}
+  }
+}

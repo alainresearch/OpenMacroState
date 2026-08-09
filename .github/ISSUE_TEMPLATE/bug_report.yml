@@ -1,0 +1,77 @@
+name: Bug report
+description: Report reproducible incorrect behavior in code, a case, or documentation.
+title: "[Bug]: "
+labels: ["type: bug", "status: needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Thank you for making OpenMacroState more reliable. Do not include secrets,
+        restricted data, or undisclosed vulnerabilities.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "0.1.0a1 or commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, and installation method.
+      placeholder: "macOS 15, Python 3.12, editable install"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and why it is incorrect.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include exact commands and the smallest synthetic or public example.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: integrity
+    attributes:
+      label: Research-integrity impact
+      options:
+        - No known effect on evidence or cutoff integrity
+        - Possible provenance or timestamp error
+        - Possible future-information leakage
+        - Possible alteration of frozen output
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or additional context
+      description: Redact tokens, local secrets, personal data, and restricted source content.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing Issues and Discussions.
+          required: true
+        - label: This report contains no credentials or restricted data.
+          required: true
+        - label: This is not an undisclosed security vulnerability.
+          required: true
+        - label: I agree to follow the Code of Conduct.
+          required: true

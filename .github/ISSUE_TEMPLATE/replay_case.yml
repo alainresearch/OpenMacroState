@@ -1,0 +1,55 @@
+name: Historical replay case
+description: Propose an auditable question with a frozen knowledge cutoff.
+title: "[Case]: "
+labels: ["type: case", "status: needs-triage"]
+body:
+  - type: input
+    id: question
+    attributes:
+      label: Decision question
+      placeholder: "What could an analyst infer about ...?"
+    validations:
+      required: true
+  - type: input
+    id: cutoff
+    attributes:
+      label: Proposed knowledge cutoff
+      description: Include date, time, and timezone when material.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence available by the cutoff
+      description: List official sources and known point-in-time archives.
+    validations:
+      required: true
+  - type: textarea
+    id: mechanisms
+    attributes:
+      label: Mechanisms and competing explanations
+    validations:
+      required: true
+  - type: textarea
+    id: evaluation
+    attributes:
+      label: Future evaluation plan
+      description: State horizons, outcomes, falsifiers, and proposed scoring rules.
+    validations:
+      required: true
+  - type: textarea
+    id: rights
+    attributes:
+      label: Data rights and redistribution plan
+      description: Identify what may be bundled, fetched, linked, or synthesized.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I separated cutoff evidence from later outcome evaluation.
+          required: true
+        - label: I agree to follow the Code of Conduct.
+          required: true

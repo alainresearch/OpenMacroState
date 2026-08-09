@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0.0",
+  "reveal_id": "2023-banks-synthetic-reveal-v1",
+  "case_id": "2023-banks-synthetic-v1",
+  "assertions": [
+    {
+      "assertion_id": "R001_not_before_exact",
+      "kind": "reveal_gate",
+      "subject": "reveal.not_before",
+      "operator": "equals",
+      "expected": "2023-03-13T22:00:00Z"
+    },
+    {
+      "assertion_id": "R002_all_reveal_records_versioned",
+      "kind": "schema",
+      "subject": "reveal_and_all_artifact_outcome_records.schema_version",
+      "operator": "all_equal",
+      "expected": "1.0.0"
+    },
+    {
+      "assertion_id": "R003_artifact_count",
+      "kind": "count",
+      "subject": "artifacts",
+      "operator": "equals",
+      "expected": 1
+    },
+    {
+      "assertion_id": "R004_artifact_content_integrity",
+      "kind": "integrity",
+      "subject": "artifact_storage",
+      "operator": "all_match_declared_sha256_and_byte_length",
+      "expected": true
+    },
+    {
+      "assertion_id": "R005_outcome_artifact_closure",
+      "kind": "lineage",
+      "subject": "outcomes.artifact_id",
+      "operator": "all_resolve_to_verified_artifacts",
+      "expected": true
+    },
+    {
+      "assertion_id": "R006_outcome_value",
+      "kind": "outcome",
+      "subject": "outcome_synth_bank_stress.value",
+      "operator": "equals",
+      "expected": 1
+    },
+    {
+      "assertion_id": "R007_resolution_time",
+      "kind": "outcome",
+      "subject": "outcome_synth_bank_stress.resolved_at",
+      "operator": "equals",
+      "expected": "2023-03-13T22:00:00Z"
+    },
+    {
+      "assertion_id": "R008_brier_score",
+      "kind": "score",
+      "subject": "pred_naive_synth_bank_stress",
+      "operator": "brier_equals",
+      "formula": "(probability - outcome_value)^2",
+      "expected": 0.4225,
+      "absolute_tolerance": 1e-12
+    },
+    {
+      "assertion_id": "R009_log_loss",
+      "kind": "score",
+      "subject": "pred_naive_synth_bank_stress",
+      "operator": "binary_log_loss_equals",
+      "formula": "-(y*ln(p) + (1-y)*ln(1-p))",
+      "expected": 1.0498221244986778,
+      "absolute_tolerance": 1e-12
+    },
+    {
+      "assertion_id": "R010_offline_only",
+      "kind": "network",
+      "subject": "reveal",
+      "operator": "requires_network_calls",
+      "expected": false
+    }
+  ]
+}

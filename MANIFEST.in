@@ -1,0 +1,16 @@
+include LICENSE
+include NOTICE
+include README.md
+include PROJECT_CHARTER.md
+include ROADMAP.md
+include CONTRIBUTING.md
+include GOVERNANCE.md
+include SECURITY.md
+include CODE_OF_CONDUCT.md
+include CITATION.cff
+include MAINTAINERS.toml
+recursive-include schemas *.json *.md
+recursive-include cases *.json *.jsonl *.md
+recursive-include reveals *.json *.jsonl *.md
+recursive-include contrib *.json *.md
+recursive-include docs *.md

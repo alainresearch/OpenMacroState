@@ -1,0 +1,82 @@
+format_version = 1
+last_updated = "2026-08-09"
+
+[project]
+name = "OpenMacroState"
+repository = "https://github.com/alainresearch/openmacrostate"
+default_branch = "main"
+governance = "GOVERNANCE.md"
+bootstrap = true
+
+[[people]]
+id = "repository-owner"
+display_name = "OpenMacroState repository owner"
+github = "alainresearch"
+roles = ["interim-project-lead", "release-manager", "security-contact", "conduct-contact"]
+status = "active"
+term_start = "2026-08-09"
+notes = "Bootstrap role; replaced by the first elected Steering Council under GOVERNANCE.md."
+
+[[areas]]
+id = "community-governance"
+paths = [
+  "README.md",
+  "PROJECT_CHARTER.md",
+  "ROADMAP.md",
+  "CONTRIBUTING.md",
+  "GOVERNANCE.md",
+  "CODE_OF_CONDUCT.md",
+  "MAINTAINERS.toml",
+  "docs/**",
+]
+maintainers = ["repository-owner"]
+reviewers = []
+status = "bootstrap"
+
+[[areas]]
+id = "release-engineering"
+paths = [
+  ".github/workflows/**",
+  ".github/release-drafter.yml",
+  "docs/releasing.md",
+  "MANIFEST.in",
+  "pyproject.toml",
+  "src/openmacrostate/_version.py",
+  "src/openmacrostate/resources.py",
+]
+maintainers = ["repository-owner"]
+reviewers = []
+status = "bootstrap"
+
+[[areas]]
+id = "security"
+paths = ["SECURITY.md", ".github/dependabot.yml"]
+maintainers = ["repository-owner"]
+reviewers = []
+status = "bootstrap"
+
+[[areas]]
+id = "public-api-and-schemas"
+paths = ["src/openmacrostate/api/**", "schemas/**"]
+maintainers = []
+reviewers = []
+status = "seeking-maintainers"
+
+[[areas]]
+id = "runtime-and-cli"
+paths = [
+  "src/openmacrostate/runtime/**",
+  "src/openmacrostate/cli.py",
+  "src/openmacrostate/__main__.py",
+  "tests/**",
+]
+maintainers = []
+reviewers = []
+status = "seeking-maintainers"
+
+[[areas]]
+id = "replay-cases"
+paths = ["cases/**", "reveals/**", "contrib/templates/**"]
+maintainers = []
+reviewers = []
+status = "seeking-maintainers"

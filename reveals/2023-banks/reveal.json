@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "reveal_id": "2023-banks-synthetic-reveal-v1",
+  "case_id": "2023-banks-synthetic-v1",
+  "not_before": "2023-03-13T22:00:00Z",
+  "outcomes_file": "outcomes.jsonl",
+  "artifacts_file": "artifacts.jsonl",
+  "checksums_file": "checksums/sha256.json",
+  "extensions": {
+    "fixture_kind": "synthetic",
+    "historical_evidence": false,
+    "offline": true,
+    "expected_assertions_file": "expected/assertions.json",
+    "licenses_file": "LICENSES.md",
+    "research_case_locator": "../../cases/2023-banks"
+  }
+}

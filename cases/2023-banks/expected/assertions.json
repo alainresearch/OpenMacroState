@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "2023-banks-synthetic-v1",
+  "assertions": [
+    {
+      "assertion_id": "A001_fixture_is_synthetic",
+      "kind": "metadata",
+      "subject": "case.fixture_kind",
+      "operator": "equals",
+      "expected": "synthetic"
+    },
+    {
+      "assertion_id": "A002_not_historical_evidence",
+      "kind": "metadata",
+      "subject": "case.extensions.historical_evidence",
+      "operator": "equals",
+      "expected": false
+    },
+    {
+      "assertion_id": "A003_cutoff_exact",
+      "kind": "cutoff",
+      "subject": "case.information_cutoff",
+      "operator": "equals",
+      "expected": "2023-03-09T23:59:59Z"
+    },
+    {
+      "assertion_id": "A004_all_research_records_versioned",
+      "kind": "schema",
+      "subject": "case_and_all_artifact_observation_claim_prediction_records.schema_version",
+      "operator": "all_equal",
+      "expected": "1.0.0"
+    },
+    {
+      "assertion_id": "A005_artifact_count",
+      "kind": "count",
+      "subject": "artifacts",
+      "operator": "equals",
+      "expected": 2
+    },
+    {
+      "assertion_id": "A006_artifact_content_integrity",
+      "kind": "integrity",
+      "subject": "artifact_storage",
+      "operator": "all_match_declared_sha256_and_byte_length",
+      "expected": true
+    },
+    {
+      "assertion_id": "A007_observation_count",
+      "kind": "count",
+      "subject": "observations",
+      "operator": "equals",
+      "expected": 5
+    },
+    {
+      "assertion_id": "A008_observation_artifact_closure",
+      "kind": "lineage",
+      "subject": "observations.artifact_id",
+      "operator": "all_resolve_to_verified_artifacts",
+      "expected": true
+    },
+    {
+      "assertion_id": "A009_authenticated_retrospective_mode",
+      "kind": "cutoff_policy",
+      "subject": "case.extensions.cutoff_policy.availability_mode",
+      "operator": "equals",
+      "expected": "retrospective_authenticated"
+    },
+    {
+      "assertion_id": "A010_late_ingestion_has_proof",
+      "kind": "cutoff_policy",
+      "subject": "pre_cutoff_observations_ingested_after_information_cutoff",
+      "operator": "all_have_verified_artifact_availability_proof",
+      "expected": true
+    },
+    {
+      "assertion_id": "A011_pre_cutoff_observations_accepted",
+      "kind": "cutoff_filter",
+      "subject": "accepted_observation_ids",
+      "operator": "set_equals",
+      "expected": [
+        "obs_synth_policy_20230308",
+        "obs_synth_deposit_pressure_20230308",
+        "obs_synth_deposit_pressure_20230309",
+        "obs_synth_funding_spread_20230309"
+      ]
+    },
+    {
+      "assertion_id": "A012_post_cutoff_observation_quarantined",
+      "kind": "cutoff_filter",
+      "subject": "obs_synth_post_cutoff_trap",
+      "operator": "rejected_for_release_or_vintage_after_cutoff",
+      "expected": true
+    },
+    {
+      "assertion_id": "A013_observed_at_does_not_override_release_time",
+      "kind": "cutoff_semantics",
+      "subject": "obs_synth_post_cutoff_trap",
+      "operator": "must_be_ineligible_even_if_observed_at_is_pre_cutoff",
+      "expected": true
+    },
+    {
+      "assertion_id": "A014_valid_claims_accepted",
+      "kind": "claim_filter",
+      "subject": "accepted_claim_ids",
+      "operator": "set_equals",
+      "expected": [
+        "claim_synth_pressure_rising",
+        "claim_synth_funding_elevated"
+      ]
+    },
+    {
+      "assertion_id": "A015_leaky_claim_rejected_transitively",
+      "kind": "claim_filter",
+      "subject": "claim_synth_leaky_must_reject",
+      "operator": "rejected_for_ineligible_evidence",
+      "expected": "obs_synth_post_cutoff_trap"
+    },
+    {
+      "assertion_id": "A016_prediction_frozen_at_cutoff",
+      "kind": "prediction_filter",
+      "subject": "pred_naive_synth_bank_stress.made_at",
+      "operator": "equals",
+      "expected": "2023-03-09T23:59:59Z"
+    },
+    {
+      "assertion_id": "A017_offline_only",
+      "kind": "network",
+      "subject": "case",
+      "operator": "requires_network_calls",
+      "expected": false
+    },
+    {
+      "assertion_id": "A018_research_manifest_scope",
+      "kind": "integrity",
+      "subject": "checksums.files",
+      "operator": "contains_only_research_bundle_files",
+      "expected": true
+    }
+  ]
+}

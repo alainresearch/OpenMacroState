@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/prediction.schema.json",
+  "title": "OpenMacroState Probabilistic Prediction v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "prediction_id",
+    "statement",
+    "probability",
+    "made_at",
+    "resolution_time",
+    "outcome_id"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "prediction_id": {"$ref": "#/$defs/stableId"},
+    "statement": {"type": "string", "minLength": 1},
+    "probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "made_at": {"type": "string", "format": "date-time"},
+    "resolution_time": {"type": "string", "format": "date-time"},
+    "outcome_id": {"$ref": "#/$defs/stableId"},
+    "model_id": {"type": ["string", "null"]},
+    "rationale_claim_ids": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/stableId"},
+      "uniqueItems": true
+    },
+    "extensions": {"type": "object", "additionalProperties": true}
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{1,255}$"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+OpenMacroState
+Copyright 2026 OpenMacroState Contributors
+
+This product includes software developed by the OpenMacroState community.
+
+The Apache License 2.0 in LICENSE applies to repository-authored code and
+documentation unless a file states otherwise. It does not grant rights to
+third-party datasets, source artifacts, publications, trademarks, model files,
+or API responses referenced or acquired by connectors and replay cases.
+
+Each external source retains its own copyright, database rights, terms of use,
+attribution requirements, and redistribution restrictions. Source-specific
+notices belong with the relevant connector, case manifest, or generated artifact.
+The names and marks of data publishers do not imply endorsement of OpenMacroState.

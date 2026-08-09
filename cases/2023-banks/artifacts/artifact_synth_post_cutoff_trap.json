@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_kind": "synthetic",
+  "historical_evidence": false,
+  "artifact_role": "post_cutoff_trap",
+  "version_id": "synth-post-cutoff-trap-v1",
+  "version_released_at": "2023-03-10T13:00:00Z",
+  "records": [
+    {
+      "observation_id": "obs_synth_post_cutoff_trap",
+      "series_id": "SYNTH_SUPERVISORY_STRESS_INDEX",
+      "observed_at": "2023-03-09T21:00:00Z",
+      "released_at": "2023-03-10T13:00:00Z",
+      "vintage_at": "2023-03-10T13:00:00Z",
+      "value": 210.0,
+      "unit": "synthetic_index"
+    }
+  ]
+}

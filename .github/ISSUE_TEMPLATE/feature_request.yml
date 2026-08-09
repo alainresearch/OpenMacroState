@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a bounded capability after checking the roadmap and Discussions.
+title: "[Feature]: "
+labels: ["type: feature", "status: needs-triage"]
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Research or user problem
+      description: Describe the decision or workflow, not only the desired implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed capability and boundaries
+      description: State what is in scope and explicitly out of scope.
+    validations:
+      required: true
+  - type: textarea
+    id: integrity
+    attributes:
+      label: Point-in-time, provenance, and compatibility effects
+      description: Identify schema, cutoff, output, migration, or trust-boundary changes.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: true
+  - type: dropdown
+    id: rfc
+    attributes:
+      label: Does this require an RFC?
+      options:
+        - Unsure; I want maintainer guidance
+        - Yes; it changes a core contract or public schema
+        - No; it is bounded behind an existing interface
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched the roadmap, Issues, and Discussions.
+          required: true
+        - label: I am willing to help implement or validate this proposal.
+          required: false
+        - label: I agree to follow the Code of Conduct.
+          required: true

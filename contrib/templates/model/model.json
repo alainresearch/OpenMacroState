@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_id": "CHANGE_ME",
+  "plugin_version": "0.1.0",
+  "api_version": ">=1,<2",
+  "runtime": "python",
+  "determinism": "seeded",
+  "required_snapshot_fields": [],
+  "output_schema_ids": [],
+  "license": "Apache-2.0",
+  "maintainers": ["CHANGE_ME"]
+}

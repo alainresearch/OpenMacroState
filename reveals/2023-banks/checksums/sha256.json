@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "sha256",
+  "self_included": false,
+  "bundle_kind": "reveal",
+  "generated_for_reveal_id": "2023-banks-synthetic-reveal-v1",
+  "case_id": "2023-banks-synthetic-v1",
+  "path_base": "reveals/2023-banks",
+  "files": [
+    {
+      "path": "LICENSES.md",
+      "bytes": 619,
+      "sha256": "f1addf74b7e8e2f45bdcd35409a25e875deaec2e12853bb28b2b4e46a369435d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 858,
+      "sha256": "9e9b3cd893450ee13046001ff76eb3c30d861b2c9aced45821ca756ca76c63de"
+    },
+    {
+      "path": "artifacts.jsonl",
+      "bytes": 729,
+      "sha256": "053096a64f9ffa35675de51a265521f2150dd922b1fbe2562ea72bffa4cdf550"
+    },
+    {
+      "path": "artifacts/artifact_synth_outcome_reveal.json",
+      "bytes": 480,
+      "sha256": "f1006c46d3936adad2b39d74ec2908db8fffce33c80c51de290ea7c5bc6fe42b"
+    },
+    {
+      "path": "expected/assertions.json",
+      "bytes": 2287,
+      "sha256": "c41cbe70db9049befe19e4f2d3875d846a672d9f49d51498ac85d4468f40a648"
+    },
+    {
+      "path": "outcomes.jsonl",
+      "bytes": 452,
+      "sha256": "27a675aa9446c3c8a433005d843975e2013aba829cb1da1683776fa2b9366f0d"
+    },
+    {
+      "path": "reveal.json",
+      "bytes": 543,
+      "sha256": "c92086bf58a59661890f736e6c9daf5d06f67789b674bd70fbe6e9143620c365"
+    }
+  ]
+}

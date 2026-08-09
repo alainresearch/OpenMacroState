@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/artifact.schema.json",
+  "title": "OpenMacroState Artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "source_id",
+    "retrieved_at",
+    "sha256",
+    "byte_length",
+    "media_type",
+    "license"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_id": {"$ref": "#/$defs/stableId"},
+    "source_id": {"$ref": "#/$defs/stableId"},
+    "retrieved_at": {"type": "string", "format": "date-time"},
+    "source_published_at": {"type": ["string", "null"], "format": "date-time"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "byte_length": {"type": "integer", "minimum": 0},
+    "media_type": {"type": "string", "minLength": 1},
+    "storage_uri": {"type": ["string", "null"]},
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["license_id", "redistribution"],
+      "properties": {
+        "license_id": {"type": "string", "minLength": 1},
+        "terms_url": {"type": ["string", "null"], "format": "uri"},
+        "redistribution": {"enum": ["allowed", "restricted", "forbidden", "unknown"]},
+        "commercial_use": {"enum": ["allowed", "restricted", "forbidden", "unknown"]},
+        "attribution": {"type": ["string", "null"]},
+        "reviewed_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "extensions": {"type": "object", "additionalProperties": true}
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{1,255}$"
+    }
+  }
+}

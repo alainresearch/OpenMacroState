@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/observation.schema.json",
+  "title": "OpenMacroState Point-in-Time Observation v1",
+  "description": "One value with economic, publication, vintage, and ingestion time kept separately.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "observation_id",
+    "series_id",
+    "source_id",
+    "artifact_id",
+    "observed_at",
+    "released_at",
+    "vintage_at",
+    "ingested_at",
+    "value",
+    "unit"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "observation_id": {"$ref": "#/$defs/stableId"},
+    "series_id": {"$ref": "#/$defs/stableId"},
+    "source_id": {"$ref": "#/$defs/stableId"},
+    "artifact_id": {"$ref": "#/$defs/stableId"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "released_at": {"type": "string", "format": "date-time"},
+    "vintage_at": {"type": "string", "format": "date-time"},
+    "ingested_at": {"type": "string", "format": "date-time"},
+    "value": {"type": ["number", "string", "boolean", "null"]},
+    "unit": {"type": "string", "minLength": 1},
+    "revision_of": {
+      "anyOf": [{"type": "null"}, {"$ref": "#/$defs/stableId"}]
+    },
+    "quality": {"enum": ["reported", "derived", "synthetic", "unknown"]},
+    "extensions": {"type": "object", "additionalProperties": true}
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{1,255}$"
+    }
+  }
+}

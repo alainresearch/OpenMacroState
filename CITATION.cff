@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: >-
+  If you use OpenMacroState in research, cite the software release and the
+  individual replay cases, datasets, and upstream sources you relied on.
+title: OpenMacroState
+type: software
+abstract: >-
+  An auditable, point-in-time operating system for global macro research,
+  historical replay, evidence provenance, mechanism analysis, and prediction
+  evaluation.
+authors:
+  - name: OpenMacroState Contributors
+repository-code: https://github.com/alainresearch/openmacrostate
+url: https://github.com/alainresearch/openmacrostate
+license: Apache-2.0
+keywords:
+  - macroeconomics
+  - point-in-time data
+  - reproducible research
+  - provenance
+  - historical replay
+  - economic data

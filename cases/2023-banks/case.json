@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "2023-banks-synthetic-v1",
+  "title": "2023 Banks — Synthetic Retrospective Point-in-Time Research Bundle",
+  "description": "A fully offline teaching fixture for authenticated retrospective cutoff enforcement and evidence closure. Every number and record is invented for software testing. The name identifies the historical window being emulated; this pack is not evidence about any real bank, market participant, or 2023 event.",
+  "information_cutoff": "2023-03-09T23:59:59Z",
+  "fixture_kind": "synthetic",
+  "artifacts_file": "inputs/artifacts.jsonl",
+  "observations_file": "inputs/observations.jsonl",
+  "claims_file": "inputs/claims.jsonl",
+  "predictions_file": "inputs/predictions.jsonl",
+  "extensions": {
+    "historical_evidence": false,
+    "offline": true,
+    "expected_assertions_file": "expected/assertions.json",
+    "checksums_file": "checksums/sha256.json",
+    "licenses_file": "LICENSES.md",
+    "cutoff_policy": {
+      "availability_mode": "retrospective_authenticated",
+      "eligible_when": "released_at <= information_cutoff AND vintage_at <= information_cutoff AND (ingested_at <= information_cutoff OR a synthetic-only proof is bound to the exact source, artifact hash, and source_published_at <= information_cutoff)",
+      "observed_at_is_not_sufficient": true,
+      "post_cutoff_disposition": "quarantine",
+      "late_ingestion_requires": [
+        "artifact.extensions.availability_proof.verified",
+        "artifact.extensions.availability_proof.proof_type",
+        "artifact.extensions.availability_proof.verified_by",
+        "artifact.extensions.availability_proof.source_id",
+        "artifact.extensions.availability_proof.artifact_sha256",
+        "artifact.extensions.availability_proof.version_released_at",
+        "artifact.extensions.availability_proof.method"
+      ],
+      "transitive_claim_policy": "reject a claim if any evidence observation is not eligible"
+    }
+  }
+}

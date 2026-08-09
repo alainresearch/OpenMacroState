@@ -1,0 +1,26 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+site/
+coverage.xml
+.coverage
+htmlcov/
+
+# Generated runs and downloaded artifacts never enter source control by default.
+runs/
+data/raw/
+data/restricted/
+
+# Local credentials and overrides.
+.env
+.env.*
+!.env.example
+*.pem
+*.key

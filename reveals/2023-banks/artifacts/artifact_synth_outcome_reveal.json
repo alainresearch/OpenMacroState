@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_kind": "synthetic",
+  "historical_evidence": false,
+  "artifact_role": "resolved_event_record",
+  "version_id": "synth-bank-stress-resolution-v1",
+  "published_at": "2023-03-13T22:00:00Z",
+  "outcome_id": "outcome_synth_bank_stress",
+  "resolved_at": "2023-03-13T22:00:00Z",
+  "value": 1,
+  "unit": "binary_event",
+  "resolution_rule": "Synthetic teaching result authored for deterministic scoring; 1 means event and 0 means no event."
+}

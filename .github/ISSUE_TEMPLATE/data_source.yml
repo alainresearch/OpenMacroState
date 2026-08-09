@@ -1,0 +1,64 @@
+name: Data source or connector
+description: Propose a source with explicit timing, provenance, and license information.
+title: "[Data]: "
+labels: ["type: data", "status: needs-triage", "needs: license-review"]
+body:
+  - type: input
+    id: publisher
+    attributes:
+      label: Publisher and dataset
+      placeholder: "Federal Reserve — H.4.1"
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Official source URL
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: Research value
+      description: Which states, mechanisms, or replay cases would this support?
+    validations:
+      required: true
+  - type: textarea
+    id: timing
+    attributes:
+      label: Release and revision semantics
+      description: Describe observation period, publication time, timezone, lag, revisions, and archives.
+    validations:
+      required: true
+  - type: textarea
+    id: schema
+    attributes:
+      label: Fields, units, frequency, and identifiers
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: Terms or license URL
+    validations:
+      required: true
+  - type: dropdown
+    id: redistribution
+    attributes:
+      label: Redistribution status
+      options:
+        - Unknown — do not bundle until reviewed
+        - Fetch/link only — redistribution is not permitted or not needed
+        - Redistribution appears permitted with attribution
+        - Public domain or equivalent
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I have not attached restricted source data.
+          required: true
+        - label: I agree to follow the Code of Conduct.
+          required: true

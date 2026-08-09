@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_id": "CHANGE_ME",
+  "plugin_version": "0.1.0",
+  "api_version": ">=1,<2",
+  "source_ids": ["CHANGE_ME"],
+  "allowed_hosts": ["CHANGE_ME.example.org"],
+  "required_secret_names": [],
+  "license": {
+    "code": "Apache-2.0",
+    "source_data": "CHANGE_ME",
+    "terms_url": "https://CHANGE_ME.example.org/terms"
+  },
+  "maintainers": ["CHANGE_ME"]
+}

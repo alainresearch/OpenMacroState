@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "change-me",
+  "title": "CHANGE_ME",
+  "description": "CHANGE_ME",
+  "information_cutoff": "2000-01-01T00:00:00Z",
+  "fixture_kind": "synthetic",
+  "artifacts_file": "inputs/artifacts.jsonl",
+  "observations_file": "inputs/observations.jsonl",
+  "claims_file": "inputs/claims.jsonl",
+  "predictions_file": "inputs/predictions.jsonl",
+  "extensions": {
+    "cutoff_policy": {
+      "availability_mode": "retrospective_authenticated"
+    }
+  }
+}

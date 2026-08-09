@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/outcome.schema.json",
+  "title": "OpenMacroState Resolved Outcome v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "outcome_id",
+    "resolved_at",
+    "value",
+    "source_id",
+    "artifact_id"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "outcome_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{1,255}$"
+    },
+    "resolved_at": {"type": "string", "format": "date-time"},
+    "value": {"type": ["number", "string", "boolean", "null"]},
+    "source_id": {"$ref": "#/$defs/stableId"},
+    "artifact_id": {"$ref": "#/$defs/stableId"},
+    "extensions": {"type": "object", "additionalProperties": true}
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{1,255}$"
+    }
+  }
+}

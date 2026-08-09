@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/reveal.schema.json",
+  "title": "OpenMacroState Reveal Bundle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "reveal_id",
+    "case_id",
+    "not_before",
+    "outcomes_file",
+    "artifacts_file",
+    "checksums_file",
+    "extensions"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "reveal_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "not_before": {"type": "string", "format": "date-time"},
+    "outcomes_file": {"type": "string", "minLength": 1},
+    "artifacts_file": {"type": "string", "minLength": 1},
+    "checksums_file": {"type": "string", "minLength": 1},
+    "extensions": {"type": "object", "additionalProperties": true}
+  }
+}

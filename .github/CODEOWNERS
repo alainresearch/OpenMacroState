@@ -1,0 +1,9 @@
+# Bootstrap ownership. Replace broad ownership with scoped Module Maintainers as
+# they are appointed in MAINTAINERS.toml.
+* @alainresearch
+
+/.github/ @alainresearch
+/docs/ @alainresearch
+/GOVERNANCE.md @alainresearch
+/SECURITY.md @alainresearch
+/MAINTAINERS.toml @alainresearch

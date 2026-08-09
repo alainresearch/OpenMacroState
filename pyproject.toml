@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openmacrostate"
+dynamic = ["version"]
+description = "An auditable, point-in-time operating system for global macro research."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [
+  {name = "OpenMacroState contributors"}
+]
+keywords = [
+  "macroeconomics",
+  "point-in-time",
+  "reproducible-research",
+  "forecast-evaluation"
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13"
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2,<2",
+  "jsonschema>=4.21,<5",
+  "pytest>=8,<9",
+  "ruff>=0.12,<1"
+]
+
+[project.scripts]
+openmacrostate = "openmacrostate.cli:main"
+oms = "openmacrostate.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/alainresearch/openmacrostate"
+Issues = "https://github.com/alainresearch/openmacrostate/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "openmacrostate._version.__version__"}
+
+[tool.setuptools.data-files]
+"share/openmacrostate/schemas/v1" = ["schemas/v1/*.json"]
+"share/openmacrostate/examples/cases/2023-banks" = [
+  "cases/2023-banks/*.json",
+  "cases/2023-banks/*.md",
+]
+"share/openmacrostate/examples/cases/2023-banks/artifacts" = [
+  "cases/2023-banks/artifacts/*.json",
+]
+"share/openmacrostate/examples/cases/2023-banks/checksums" = [
+  "cases/2023-banks/checksums/*.json",
+]
+"share/openmacrostate/examples/cases/2023-banks/expected" = [
+  "cases/2023-banks/expected/*.json",
+]
+"share/openmacrostate/examples/cases/2023-banks/inputs" = [
+  "cases/2023-banks/inputs/*.jsonl",
+]
+"share/openmacrostate/examples/reveals/2023-banks" = [
+  "reveals/2023-banks/*.json",
+  "reveals/2023-banks/*.jsonl",
+  "reveals/2023-banks/*.md",
+]
+"share/openmacrostate/examples/reveals/2023-banks/artifacts" = [
+  "reveals/2023-banks/artifacts/*.json",
+]
+"share/openmacrostate/examples/reveals/2023-banks/checksums" = [
+  "reveals/2023-banks/checksums/*.json",
+]
+"share/openmacrostate/examples/reveals/2023-banks/expected" = [
+  "reveals/2023-banks/expected/*.json",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

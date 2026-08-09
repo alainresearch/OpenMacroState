@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "sha256",
+  "self_included": false,
+  "bundle_kind": "research_case",
+  "generated_for_case_id": "2023-banks-synthetic-v1",
+  "path_base": "cases/2023-banks",
+  "files": [
+    {
+      "path": "LICENSES.md",
+      "bytes": 1266,
+      "sha256": "e15360eb373927ef22af29927f1889084907830285ab12d526f43f2cf99dbaf9"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1516,
+      "sha256": "f85908cc0af77242e8249b09be04150a384f58af3b49acf72f6a3229ac7a272d"
+    },
+    {
+      "path": "artifacts/artifact_synth_post_cutoff_trap.json",
+      "bytes": 555,
+      "sha256": "49c0a3b63228838a56b95cbf8fe72547d30b57f5b0d74ff1c87b4bb7cdd9075f"
+    },
+    {
+      "path": "artifacts/artifact_synth_pre_cutoff_snapshot.json",
+      "bytes": 1519,
+      "sha256": "0ca4204e98d05fbbc5f1417ce35a25a852838ecf287014e3e4c8d938519eb8af"
+    },
+    {
+      "path": "case.json",
+      "bytes": 1972,
+      "sha256": "6a4c0a24860f84cb64a837583fd7653a8710ec30d6b91c28c52a12e32c929302"
+    },
+    {
+      "path": "expected/assertions.json",
+      "bytes": 4248,
+      "sha256": "88b1d04ab2844cda297c6213c01d81599fa381a9060ebb55a30ee65f38d0ae81"
+    },
+    {
+      "path": "inputs/artifacts.jsonl",
+      "bytes": 2099,
+      "sha256": "335c660a9ea5236ba116da9bd788b197a7894608ebafb1146f4e0460d3400c8c"
+    },
+    {
+      "path": "inputs/claims.jsonl",
+      "bytes": 3478,
+      "sha256": "7c7fd79787f2de2321614b500c485a1d6caa58a22cf747951cf59a42a716b518"
+    },
+    {
+      "path": "inputs/observations.jsonl",
+      "bytes": 2769,
+      "sha256": "3a95c6fa28726ce9e13e5d78a6c5d6d110f5e632ba4af51c6a3b52b2daf7ba55"
+    },
+    {
+      "path": "inputs/predictions.jsonl",
+      "bytes": 827,
+      "sha256": "7cf75a685098f476b6adf748312cdef6b6bf7485a2cd84834bb88b8f16b7fff4"
+    }
+  ]
+}
