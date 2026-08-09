@@ -3,6 +3,7 @@
 [![CI](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml/badge.svg)](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml)
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue.svg)](https://www.python.org/)
 [![Code/docs: Apache-2.0](https://img.shields.io/badge/code%20%26%20docs-Apache--2.0-blue.svg)](LICENSE)
+[![Pre-release: v0.1.0a3](https://img.shields.io/badge/pre--release-v0.1.0a3-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a3)
 
 **An auditable, point-in-time operating system for global macro research.**
 
@@ -58,6 +59,12 @@ official-source capture paths. These connectors are not stable historical
 evidence packs. The repository still does **not** ship a production model adapter
 or a reviewed real historical replay, and it is not a production trading or
 policy system.
+
+The current public pre-release is [v0.1.0a3](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a3).
+Its wheel and source archive are available from GitHub Releases only;
+OpenMacroState has not been published to PyPI. To help shape the next milestone,
+review the Draft [2023 banking-stress replay RFC](https://github.com/alainresearch/OpenMacroState/pull/18)
+or contribute to the [Federal Reserve H.4.1 connector](https://github.com/alainresearch/OpenMacroState/issues/9).
 
 ## Five-minute synthetic demo
 
