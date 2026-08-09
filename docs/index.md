@@ -19,10 +19,10 @@ analysis is optional and remains subject to the same cutoff, provenance, and
 review requirements.
 
 The current executable `cases/2023-banks` example is a wholly synthetic teaching
-fixture, not historical evidence. The first official-source connector,
-`frbny-sofr`, is present as a pre-alpha conservative prospective-capture slice,
-not a reviewed historical evidence pack. Real historical replay remains roadmap
-work.
+fixture, not historical evidence. The `frbny-sofr` and
+`treasury-debt-to-penny` official-source connectors are present as pre-alpha
+conservative prospective-capture slices, not reviewed historical evidence packs.
+Real historical replay remains roadmap work.
 
 Prediction-time research under `cases/` and post-resolution material under
 `reveals/` are independent bundles. The validator reads only the former; see the

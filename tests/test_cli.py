@@ -4,6 +4,8 @@ import json
 import socket
 from pathlib import Path
 
+import pytest
+
 from openmacrostate.cli import main
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -121,28 +123,54 @@ def test_force_does_not_follow_output_symlinks(tmp_path: Path, capsys) -> None:
     assert victim.read_text(encoding="utf-8") == "keep me"
 
 
-def test_connector_list_command(capsys) -> None:
+def test_connector_capture_help_uses_connector_specific_source_date(capsys) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        main(["connector", "capture", "--help"])
+
+    assert exc_info.value.code == 0
+    output = capsys.readouterr().out
+    normalized = " ".join(output.split())
+    assert "inclusive source date" in normalized
+    assert "semantics are connector-specific" in normalized
+    assert "inclusive value date" not in normalized
+
+
+def test_connector_list_is_offline_deterministic(tmp_path: Path, monkeypatch, capsys) -> None:
+    def forbidden_socket(*args, **kwargs):
+        raise AssertionError("connector list attempted to open a network socket")
+
+    monkeypatch.setattr(socket, "socket", forbidden_socket)
+    monkeypatch.chdir(tmp_path)
+
     assert main(["connector", "list"]) == 0
-    stdout = capsys.readouterr().out
-    assert "Built-in review trust is not a third-party sandbox." in stdout
-    assert "frbny-sofr v0.1.0" in stdout
-    assert "Source name: Federal Reserve Bank of New York" in stdout
-    assert "Allowed host: markets.newyorkfed.org" in stdout
-    assert "Capture modes: online, recording" in stdout
-    assert "Redistribution status: restricted" in stdout
-    assert "Documentation link: https://www.newyorkfed.org/privacy/termsofuse.html" in stdout
+    first = capsys.readouterr().out
+    assert main(["connector", "list"]) == 0
+    second = capsys.readouterr().out
+
+    assert first == second
+    assert "Built-in review trust is not a third-party sandbox." in first
+    assert "frbny-sofr v0.1.0" in first
+    assert "treasury-debt-to-penny v0.1.0" in first
+    assert "Source name: Federal Reserve Bank of New York" in first
+    assert "Source name: U.S. Department of the Treasury, Bureau of the Fiscal Service" in first
+    assert not tuple(tmp_path.iterdir())
 
 
 def test_connector_list_json_command(capsys) -> None:
     assert main(["connector", "list", "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
     assert data["trust_notice"] == "Built-in review trust is not a third-party sandbox."
-    connectors = data["connectors"]
-    assert len(connectors) >= 1
-    frbny = next(c for c in connectors if c["connector_id"] == "frbny-sofr")
-    assert frbny["version"] == "0.1.0"
-    assert frbny["source_name"] == "Federal Reserve Bank of New York"
-    assert frbny["allowed_hosts"] == ["markets.newyorkfed.org"]
-    assert frbny["capture_modes"] == ["online", "recording"]
-    assert frbny["redistribution_status"] == "restricted"
-    assert frbny["documentation_link"] == "https://www.newyorkfed.org/privacy/termsofuse.html"
+    assert [item["connector_id"] for item in data["connectors"]] == [
+        "frbny-sofr",
+        "treasury-debt-to-penny",
+    ]
+    treasury = data["connectors"][1]
+    assert treasury == {
+        "allowed_hosts": ["api.fiscaldata.treasury.gov"],
+        "capture_modes": ["online", "recording"],
+        "connector_id": "treasury-debt-to-penny",
+        "documentation_link": "https://fiscaldata.treasury.gov/api-documentation/",
+        "redistribution_status": "allowed",
+        "source_name": ("U.S. Department of the Treasury, Bureau of the Fiscal Service"),
+        "version": "0.1.0",
+    }

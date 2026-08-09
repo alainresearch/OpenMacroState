@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "recording_kind": "test_only_excerpt",
+  "request": {
+    "method": "GET",
+    "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?fields=record_date%2Ctot_pub_debt_out_amt%2Csrc_line_nbr&filter=record_date%3Agte%3A2026-08-05%2Crecord_date%3Alte%3A2026-08-06&sort=record_date&format=json&page%5Bnumber%5D=1&page%5Bsize%5D=367",
+    "accept": "application/json"
+  },
+  "response": {
+    "status_code": 200,
+    "final_url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?fields=record_date%2Ctot_pub_debt_out_amt%2Csrc_line_nbr&filter=record_date%3Agte%3A2026-08-05%2Crecord_date%3Alte%3A2026-08-06&sort=record_date&format=json&page%5Bnumber%5D=1&page%5Bsize%5D=367",
+    "headers": {
+      "content-type": "application/json",
+      "date": "Sun, 09 Aug 2026 16:20:01 GMT"
+    },
+    "retrieved_at": "2026-08-09T16:20:01Z",
+    "body_file": "response.json",
+    "byte_length": 985,
+    "sha256": "4ea0958c9dee025499e14c33e05912de2b16fdcc7a449be68e4ee4c502d39a02"
+  }
+}

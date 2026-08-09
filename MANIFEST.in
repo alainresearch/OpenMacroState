@@ -14,3 +14,4 @@ recursive-include cases *.json *.jsonl *.md
 recursive-include reveals *.json *.jsonl *.md
 recursive-include contrib *.json *.md
 recursive-include docs *.md
+recursive-include tests/fixtures *.json *.md

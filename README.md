@@ -39,8 +39,9 @@ flowchart LR
 ```
 
 OpenMacroState is not another chart terminal and does not claim to predict
-markets. Its first official-source pre-alpha vertical slice is the New York Fed
-SOFR connector, `frbny-sofr`. It is deliberately conservative:
+markets. Its first two official-source pre-alpha vertical slices are the New York
+Fed SOFR connector, `frbny-sofr`, and the U.S. Treasury Debt to the Penny
+connector, `treasury-debt-to-penny`. Both are deliberately conservative:
 historical values retrieved today do not become evidence that the system had
 captured them in the past. Replaying a recording with an old `retrieved_at`
 claim does not restore past availability either: without an authenticated proof,
@@ -52,9 +53,9 @@ the core uses the current replay time for eligibility. See the
 OpenMacroState is in **pre-alpha development**. Interfaces, schemas, and bundled
 cases may change before the first stable release. Today the repository provides
 a public research contract, versioned interchange schemas, public plugin
-protocols, an executable offline validator/demo, and the first pre-alpha
-official-source capture path. That connector is not yet a stable historical
-evidence pack. The repository still does **not** ship a production model adapter
+protocols, an executable offline validator/demo, and two pre-alpha
+official-source capture paths. These connectors are not stable historical
+evidence packs. The repository still does **not** ship a production model adapter
 or a reviewed real historical replay, and it is not a production trading or
 policy system.
 
@@ -100,7 +101,7 @@ pytest
 See the [quickstart](docs/quickstart.md) for the expected artifacts and common
 troubleshooting steps.
 
-## First official-source capture
+## Official-source captures
 
 The built-in `frbny-sofr` connector exercises the full acquisition boundary
 without making network access implicit:
@@ -121,6 +122,25 @@ instead of `--recording` only when you intentionally want the core to make one
 allowlisted HTTPS request. Live capture is labeled `core_observed_https`; that
 is a local acquisition record, not a signed historical timestamp or a causal
 claim. See the [connector contract](docs/connectors.md).
+
+The second built-in connector captures total U.S. public debt outstanding from
+Treasury Fiscal Data's Debt to the Penny endpoint:
+
+```bash
+openmacrostate connector capture treasury-debt-to-penny \
+  --start 2026-08-05 --end 2026-08-06 \
+  --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
+  --output build/treasury-debt-to-penny
+openmacrostate validate build/treasury-debt-to-penny
+```
+
+This reserialized `test_only_excerpt` contains real Treasury values and produces
+two normalized `treasury.debt.total_public_outstanding` observations. It is an
+offline parser and provenance fixture, not exact original wire bytes and not an
+authenticated 2026 historical vintage. The live connector fixes the official
+host, selected fields, encoded date filter, ascending sort, JSON format, and a
+single bounded page; it rejects empty, truncated, same-day, future, malformed,
+or out-of-order results.
 
 ## The problem it addresses
 
@@ -279,9 +299,10 @@ advice. Source data can be incomplete, revised, delayed, or wrong.
 清单；`validate` 完全不读取揭晓包。代码采用 Apache-2.0，外部数据仍遵守各自
 许可证。
 
-首个官方数据纵向切片已以 pre-alpha 纽约联储 SOFR 连接器 `frbny-sofr` 落地。
-它采用保守时间规则：今天抓取到的历史值，不会被倒填成系统在当年已经
-捕获的证据。详见[Connector 契约](docs/connectors.md)。
+首批官方数据纵向切片已经落地：纽约联储 SOFR 连接器 `frbny-sofr`，以及
+美国财政部总公共债务连接器 `treasury-debt-to-penny`。二者都采用保守时间
+规则：今天抓取到的历史值，不会被倒填成系统在当年已经捕获的证据。详见
+[Connector 契约](docs/connectors.md)。
 
 快速运行：
 

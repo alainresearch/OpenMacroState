@@ -11,7 +11,12 @@ from types import MappingProxyType
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from openmacrostate.api.v1.connector_types import FetchRequest, FrozenArtifact, ObservationDraft
+from openmacrostate.api.v1.connector_types import (
+    CaptureBundleMetadata,
+    FetchRequest,
+    FrozenArtifact,
+    ObservationDraft,
+)
 from openmacrostate.api.v1.errors import ContractError
 from openmacrostate.api.v1.types import parse_timestamp
 
@@ -77,6 +82,19 @@ class FrbnySofrConnector:
 
     __slots__ = ()
     ruleset_version = "frbny-sofr-normalization/3"
+    bundle_metadata = CaptureBundleMetadata(
+        title="FRBNY SOFR official-source capture",
+        fixture_kind="licensed_public",
+        source_notice=(
+            "The SOFR Data is subject to the Terms of Use posted at newyorkfed.org. "
+            "The New York Fed is not responsible for publication of the SOFR Data by "
+            "OpenMacroState, does not sanction or endorse any particular republication, "
+            "and has no liability for your use.\n\n"
+            "OpenMacroState is not affiliated with the New York Fed. The New York Fed "
+            "does not sanction, endorse, or recommend any products or services offered "
+            "by OpenMacroState."
+        ),
+    )
 
     spec: Mapping[str, Any] = MappingProxyType(
         {

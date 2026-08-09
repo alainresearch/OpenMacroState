@@ -6,6 +6,9 @@ from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
 
 from openmacrostate.connectors.frbny_sofr import FrbnySofrConnector
+from openmacrostate.connectors.treasury_debt_to_penny import (
+    TreasuryDebtToPennyConnector,
+)
 from openmacrostate.runtime.case import evaluate_case
 from openmacrostate.runtime.connectors import run_connector
 from openmacrostate.runtime.http import RecordedHttpTransport
@@ -15,6 +18,8 @@ CASE = ROOT / "cases" / "2023-banks"
 REVEAL = ROOT / "reveals" / "2023-banks"
 SCHEMAS = ROOT / "schemas" / "v1"
 CONNECTOR_FIXTURE = ROOT / "tests" / "fixtures" / "connectors" / "frbny_sofr"
+TREASURY_FIXTURE = ROOT / "tests" / "fixtures" / "connectors" / "treasury_debt_to_penny"
+CONNECTOR_TEMPLATE = ROOT / "contrib" / "templates" / "connector" / "connector.json"
 
 
 def _records(path: Path) -> list[dict[str, object]]:
@@ -47,6 +52,13 @@ def test_bundled_case_matches_public_wire_schemas() -> None:
     _validate(evaluate_case(CASE).snapshot(), "snapshot.schema.json")
 
 
+def test_connector_contribution_template_matches_public_schema() -> None:
+    _validate(
+        json.loads(CONNECTOR_TEMPLATE.read_text(encoding="utf-8")),
+        "connector.schema.json",
+    )
+
+
 def test_frbny_connector_recording_and_collection_match_schemas(tmp_path: Path) -> None:
     connector = FrbnySofrConnector()
     spec = json.loads(json.dumps(dict(connector.spec)))
@@ -62,6 +74,30 @@ def test_frbny_connector_recording_and_collection_match_schemas(tmp_path: Path) 
         output,
         protected_paths=(CONNECTOR_FIXTURE,),
         clock=lambda: "2026-08-09T15:30:00Z",
+    )
+    _validate(json.loads((output / "collection.json").read_text()), "collection.schema.json")
+    _validate(json.loads((output / "case.json").read_text()), "case.schema.json")
+    for record in _records(output / "inputs" / "artifacts.jsonl"):
+        _validate(record, "artifact.schema.json")
+    for record in _records(output / "inputs" / "observations.jsonl"):
+        _validate(record, "observation.schema.json")
+
+
+def test_treasury_connector_recording_and_collection_match_schemas(tmp_path: Path) -> None:
+    connector = TreasuryDebtToPennyConnector()
+    spec = json.loads(json.dumps(dict(connector.spec)))
+    _validate(spec, "connector.schema.json")
+    recording = json.loads((TREASURY_FIXTURE / "recording.json").read_text(encoding="utf-8"))
+    _validate(recording, "http-recording.schema.json")
+
+    output = tmp_path / "capture"
+    run_connector(
+        connector,
+        {"start": "2026-08-05", "end": "2026-08-06"},
+        RecordedHttpTransport(TREASURY_FIXTURE / "recording.json"),
+        output,
+        protected_paths=(TREASURY_FIXTURE,),
+        clock=lambda: "2026-08-09T16:21:00Z",
     )
     _validate(json.loads((output / "collection.json").read_text()), "collection.schema.json")
     _validate(json.loads((output / "case.json").read_text()), "case.schema.json")

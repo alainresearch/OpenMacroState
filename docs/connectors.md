@@ -5,10 +5,11 @@ decide whether an observation is eligible for a historical cutoff, and they do
 not own networking, hashing, or case output. Those controls remain in the core
 runtime.
 
-The first official-source vertical slice is `frbny-sofr`, for the Federal
-Reserve Bank of New York's Secured Overnight Financing Rate (SOFR). It is a
-pre-alpha **prospective-capture** connector, not proof that OpenMacroState held
-an old SOFR vintage when that value was originally published.
+The first two official-source vertical slices are `frbny-sofr`, for the Federal
+Reserve Bank of New York's Secured Overnight Financing Rate (SOFR), and
+`treasury-debt-to-penny`, for total U.S. public debt outstanding. They are
+pre-alpha **prospective-capture** connectors, not proof that OpenMacroState held
+an old source vintage when its value date occurred.
 
 > **Pre-alpha status:** this command contract is implemented on the current
 > development tree but may change before a stable release. Command help in the
@@ -41,19 +42,23 @@ This pre-alpha is not a malicious-plugin sandbox.
 
 ## Discovering connectors
 
-Built-in connectors can be discovered without touching the network or writing code:
+Built-in connectors can be discovered without touching the network or writing
+files:
 
 ```bash
 oms connector list
 ```
 
-To output structured JSON:
+For deterministic structured output:
 
 ```bash
 oms connector list --json
 ```
 
-The list command details each review-trusted connector's ID, version, source name, allowed hosts, capture modes, redistribution status, and documentation link, alongside an explicit notice that built-in review trust is not a third-party sandbox.
+The command reports each review-trusted connector's ID, version, source name,
+allowed hosts, capture modes, redistribution status, and source-policy link. It
+also repeats the boundary that review trust is not a third-party sandbox. The
+current list contains both `frbny-sofr` and `treasury-debt-to-penny`.
 
 ## Recorded and online modes
 
@@ -65,9 +70,10 @@ exactly one of two mutually exclusive modes:
 - `--online` makes an explicit HTTPS request through the core-owned transport.
 
 If neither flag is present, or both are present, capture fails closed. Online
-capture does not accept a user-supplied URL: `frbny-sofr` constructs a bounded
-official endpoint from the validated start and end dates and permits only the
-exact `markets.newyorkfed.org` host.
+capture does not accept a user-supplied URL. Each built-in constructs its own
+bounded official endpoint from validated start and end dates. SOFR permits only
+`markets.newyorkfed.org`; Debt to the Penny permits only
+`api.fiscaldata.treasury.gov`.
 
 A recording manifest can truthfully report what its recorder claims, but its
 `retrieved_at` value is self-asserted metadata. Byte length and SHA-256 prove
@@ -89,6 +95,18 @@ oms connector capture frbny-sofr \
   --output build/frbny-sofr-capture
 
 oms validate build/frbny-sofr-capture
+```
+
+The equivalent Treasury offline replay is:
+
+```bash
+oms connector capture treasury-debt-to-penny \
+  --start 2026-08-05 \
+  --end 2026-08-06 \
+  --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
+  --output build/treasury-debt-to-penny-capture
+
+oms validate build/treasury-debt-to-penny-capture
 ```
 
 An intentional live capture is:
@@ -207,6 +225,59 @@ morning publication and again after the revision window. Scheduling is not part
 of the current connector; an external scheduler must invoke explicit captures
 and preserve failures as failures.
 
+## U.S. Treasury Debt to the Penny source
+
+The `treasury-debt-to-penny` connector uses the official Treasury Fiscal Data
+[`Debt to the Penny` dataset](https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/debt-to-the-penny)
+endpoint. It never accepts an arbitrary URL. Its one request
+fixes the exact `api.fiscaldata.treasury.gov` host, dataset path, URL-encoded
+field selection and date filter, ascending sort, JSON format, page number 1,
+and page size 367. Start must be on or after 1993-04-01, and a request may span
+at most 367 inclusive calendar days.
+
+The connector selects only `record_date`, `tot_pub_debt_out_amt`, and
+`src_line_nbr`. This is intentional: older rows can expose component fields as
+the string `"null"` or use a documented `$0.00` sentinel. The v0.1 connector
+normalizes only total public debt outstanding and does not infer or validate a
+component identity where those components are not reliably populated.
+
+Each accepted row becomes one `treasury.debt.total_public_outstanding`
+observation in USD. The total must be a positive fixed-two-decimal JSON string.
+JSON numbers, zero, `null`, `"null"`, exponent notation, commas, currency
+symbols, and other formats fail closed. `src_line_nbr` must be the documented
+string `"1"`. Rows must be non-empty, strictly ascending, unique, and inside
+the requested range.
+
+Pagination is an integrity check, not a navigation feature. The connector
+requires `count == total-count == len(data)`, `total-pages == 1`, null `next`
+and `prev` links, and exact page-1/page-size-367 link fragments. It never follows
+source-provided links. Unknown row, metadata, or link fields and malformed
+metadata types fail closed. These checks prove only that the captured response
+is one complete bounded page under the fixed query; they do not authenticate a
+past release time.
+
+Treasury's data dictionary and dataset introduction give potentially confusing
+descriptions of `record_date`, while the official release calendar provides
+estimated schedule times rather than row-level publication evidence. The
+connector records this ambiguity and does not synthesize a release timestamp.
+Both the requested end date and every returned `record_date` must be strictly
+earlier than the core retrieval calendar date in `America/New_York`.
+`observed_at` is a canonical UTC date anchor, not a midnight event claim.
+`released_at`, `vintage_at`, and the current pre-alpha `ingested_at` use the
+conservative core live-capture or replay wall-clock; `source_published_at`
+remains unknown. The endpoint exposes no row revision or vintage field.
+
+The checked-in fixture contains real values for 2026-08-05 and 2026-08-06 but
+was reserialized for review. It is machine-labeled `test_only_excerpt`, not the
+exact original response bytes and not an authenticated historical capture.
+
+The authoritative endpoint contract and open-data policy are in Treasury
+Fiscal Data's [API documentation](https://fiscaldata.treasury.gov/api-documentation/).
+The project records redistribution and commercial use as allowed for the
+Treasury-generated data records captured here. It does not label them CC0 or
+Apache-2.0, grant rights in trademarks or third-party material, or imply
+Treasury endorsement.
+
 ## Source and license requirements
 
 FRBNY reference-rate content is subject to the New York Fed
@@ -214,6 +285,11 @@ FRBNY reference-rate content is subject to the New York Fed
 source attribution, modification labeling, distribution conditions, and the
 specific reference-rate notice and non-endorsement language. It is not relicensed
 under Apache-2.0 merely because connector code is Apache-2.0.
+
+Treasury Debt to the Penny captures use the source decision documented above
+and in the [data-license policy](data-licensing.md). Generated bundles retain
+the source, terms URL, review date, and non-endorsement boundary next to the
+data and normalized observations.
 
 Do not replace this direct official source with FRED or ALFRED. Their useful
 vintage interface does not override their current terms or third-party rights;

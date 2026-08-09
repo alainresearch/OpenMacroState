@@ -1,0 +1,41 @@
+{
+  "data": [
+    {
+      "record_date": "2026-08-05",
+      "tot_pub_debt_out_amt": "39829652708623.61",
+      "src_line_nbr": "1"
+    },
+    {
+      "record_date": "2026-08-06",
+      "tot_pub_debt_out_amt": "39890263441627.83",
+      "src_line_nbr": "1"
+    }
+  ],
+  "meta": {
+    "count": 2,
+    "labels": {
+      "record_date": "Record Date",
+      "tot_pub_debt_out_amt": "Total Public Debt Outstanding",
+      "src_line_nbr": "Source Line Number"
+    },
+    "dataTypes": {
+      "record_date": "DATE",
+      "tot_pub_debt_out_amt": "CURRENCY",
+      "src_line_nbr": "INTEGER"
+    },
+    "dataFormats": {
+      "record_date": "YYYY-MM-DD",
+      "tot_pub_debt_out_amt": "$10.20",
+      "src_line_nbr": "10"
+    },
+    "total-count": 2,
+    "total-pages": 1
+  },
+  "links": {
+    "self": "&page%5Bnumber%5D=1&page%5Bsize%5D=367",
+    "first": "&page%5Bnumber%5D=1&page%5Bsize%5D=367",
+    "prev": null,
+    "next": null,
+    "last": "&page%5Bnumber%5D=1&page%5Bsize%5D=367"
+  }
+}

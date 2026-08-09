@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 
 from openmacrostate import __version__
 from openmacrostate.api.v1.connector_types import (
+    CaptureBundleMetadata,
     FetchRequest,
     FrozenArtifact,
     ObservationDraft,
@@ -40,7 +41,7 @@ from openmacrostate.runtime.jsonio import (
 )
 
 MAX_CONNECTOR_BYTES = 4 * 1024 * 1024
-CONNECTOR_CAPTURE_RULESET_VERSION = "openmacrostate-connector-capture/2"
+CONNECTOR_CAPTURE_RULESET_VERSION = "openmacrostate-connector-capture/3"
 _HOST = re.compile(r"^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?$")
 _SPEC_FIELDS = {
     "schema_version",
@@ -62,6 +63,7 @@ _LICENSE_FIELDS = {
 }
 _COMPLETION_MARKER = ".openmacrostate-capture.json"
 _INCOMPLETE_MARKER = ".openmacrostate-incomplete"
+_CAPTURE_FIXTURE_KINDS = frozenset({"synthetic", "licensed_public", "restricted_reference"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,6 +146,36 @@ def validate_connector_spec(spec: Mapping[str, Any]) -> dict[str, Any]:
         "license": dict(license_record),
         "plugin_id": plugin_id,
     }
+
+
+def _validate_bundle_metadata(value: object) -> CaptureBundleMetadata:
+    if type(value) is not CaptureBundleMetadata:
+        raise ContractError("connector bundle_metadata must use CaptureBundleMetadata")
+    if (
+        not value.title
+        or value.title != value.title.strip()
+        or "\n" in value.title
+        or "\r" in value.title
+        or len(value.title) > 200
+    ):
+        raise ContractError("connector capture title must be one trimmed line up to 200 characters")
+    if value.fixture_kind not in _CAPTURE_FIXTURE_KINDS:
+        raise ContractError("connector capture fixture_kind is invalid")
+    if (
+        not value.source_notice
+        or value.source_notice != value.source_notice.strip()
+        or "\x00" in value.source_notice
+        or len(value.source_notice.encode("utf-8")) > 64 * 1024
+    ):
+        raise ContractError(
+            "connector source_notice must be trimmed, non-empty UTF-8 text up to 64 KiB"
+        )
+    return value
+
+
+def _capture_id_component(plugin_id: str) -> str:
+    component = re.sub(r"[^a-z0-9._-]+", "-", plugin_id.lower()).strip("-._")
+    return component[:64] or "connector"
 
 
 def validate_fetch_request(request: FetchRequest, *, allowed_hosts: Iterable[str]) -> None:
@@ -336,6 +368,7 @@ def _write_capture_bundle(
     observations: list[dict[str, Any]],
     case_id: str,
     collection: dict[str, Any],
+    bundle_metadata: CaptureBundleMetadata,
 ) -> None:
     try:
         output.mkdir(mode=0o700)
@@ -350,22 +383,16 @@ def _write_capture_bundle(
     write_json(output / "collection.json", collection)
     license_notice = f"""# Source data notice
 
-The captured SOFR data is not licensed under this repository's Apache-2.0 code license.
+The captured source data is not licensed under this repository's Apache-2.0 code license.
 
 License: {spec["license"]["license_id"]}
 Terms: {spec["license"]["terms_url"]}
-Attribution: © {artifact.retrieved_at[:4]} Federal Reserve Bank of New York.
-Content from the New York Fed is subject to the Terms of Use at newyorkfed.org.
+Attribution: {spec["license"]["attribution"]}
 
-The SOFR Data is subject to the Terms of Use posted at newyorkfed.org. The New York
-Fed is not responsible for publication of the SOFR Data by OpenMacroState, does not
-sanction or endorse any particular republication, and has no liability for your use.
+{bundle_metadata.source_notice}
 
 The normalized observations are an OpenMacroState transformation of the captured
-response, not New York Fed-authored records.
-OpenMacroState is not affiliated with the New York Fed. The New York Fed does not
-sanction, endorse, or recommend any products or services offered by
-OpenMacroState.
+response, not records authored or endorsed by the source.
 """
     write_text_atomic(output / "LICENSES.md", license_notice)
     if artifact.source_authentication == "core_observed_https":
@@ -381,10 +408,10 @@ OpenMacroState.
     case = {
         "schema_version": SCHEMA_VERSION,
         "case_id": case_id,
-        "title": "FRBNY SOFR official-source capture",
+        "title": bundle_metadata.title,
         "description": description,
         "information_cutoff": artifact.retrieved_at,
-        "fixture_kind": "licensed_public",
+        "fixture_kind": bundle_metadata.fixture_kind,
         "artifacts_file": "inputs/artifacts.jsonl",
         "observations_file": "inputs/observations.jsonl",
         "claims_file": "inputs/claims.jsonl",
@@ -489,6 +516,7 @@ def run_connector(
         )
     output = validate_new_output_directory(output_directory, protected_paths=protected_paths)
     spec = validate_connector_spec(connector.spec)
+    bundle_metadata = _validate_bundle_metadata(connector.bundle_metadata)
     connector_ruleset_version = connector.ruleset_version
     if not isinstance(connector_ruleset_version, str) or not connector_ruleset_version:
         raise ContractError("connector ruleset_version must be a non-empty string")
@@ -515,6 +543,11 @@ def run_connector(
         source_authentication=source_authentication,
         transport_time_core_observed=transport_time_core_observed,
     )
+    license_reviewed_at = parse_timestamp(
+        spec["license"]["reviewed_at"], field="connector.license.reviewed_at"
+    )
+    if license_reviewed_at > parse_timestamp(artifact.retrieved_at, field="core_retrieved_at"):
+        raise ContractError("connector license reviewed_at must not follow the core retrieval time")
     drafts = tuple(connector.normalize(artifact))
     if any(not isinstance(draft, ObservationDraft) for draft in drafts):
         raise ContractError("connector normalize must yield ObservationDraft values")
@@ -579,6 +612,11 @@ def run_connector(
                     "version": spec["plugin_version"],
                     "ruleset_version": connector_ruleset_version,
                 },
+                "bundle_metadata": {
+                    "title": bundle_metadata.title,
+                    "fixture_kind": bundle_metadata.fixture_kind,
+                    "source_notice": bundle_metadata.source_notice,
+                },
                 "request": {
                     "method": request.method,
                     "url": request.url,
@@ -607,8 +645,9 @@ def run_connector(
             }
         )
     )
-    case_id = f"capture-frbny-sofr-{capture_digest[:16]}"
-    collection_id = f"collection:frbny-sofr:{capture_digest[:16]}"
+    id_component = _capture_id_component(str(spec["plugin_id"]))
+    case_id = f"capture-{id_component}-{capture_digest[:32]}"
+    collection_id = f"collection:{id_component}:{capture_digest[:32]}"
     collection = {
         "schema_version": SCHEMA_VERSION,
         "collection_id": collection_id,
@@ -640,6 +679,7 @@ def run_connector(
         observations=observations,
         case_id=case_id,
         collection=collection,
+        bundle_metadata=bundle_metadata,
     )
     return ConnectorCapture(
         case_dir=output.resolve(),

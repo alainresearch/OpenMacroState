@@ -74,6 +74,13 @@ jobs:
             --recording tests/fixtures/connectors/frbny_sofr/recording.json \
             --output build/frbny-sofr
           openmacrostate validate build/frbny-sofr
+      - name: Replay the Treasury connector fixture offline
+        run: |
+          openmacrostate connector capture treasury-debt-to-penny \
+            --start 2026-08-05 --end 2026-08-06 \
+            --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
+            --output build/treasury-debt-to-penny
+          openmacrostate validate build/treasury-debt-to-penny
       - name: Upload replay artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -81,4 +88,5 @@ jobs:
           path: |
             build/demo
             build/frbny-sofr
+            build/treasury-debt-to-penny
           if-no-files-found: error

@@ -1,15 +1,17 @@
 {
   "schema_version": "1.0.0",
-  "plugin_id": "CHANGE_ME",
+  "plugin_id": "example-connector",
   "plugin_version": "0.1.0",
-  "api_version": ">=1,<2",
-  "source_ids": ["CHANGE_ME"],
-  "allowed_hosts": ["CHANGE_ME.example.org"],
+  "api_version": "1",
+  "source_ids": ["example.publisher.dataset"],
+  "allowed_hosts": ["data.example.org"],
   "required_secret_names": [],
   "license": {
-    "code": "Apache-2.0",
-    "source_data": "CHANGE_ME",
-    "terms_url": "https://CHANGE_ME.example.org/terms"
-  },
-  "maintainers": ["CHANGE_ME"]
+    "license_id": "REVIEW-REQUIRED",
+    "terms_url": "https://data.example.org/terms",
+    "redistribution": "unknown",
+    "commercial_use": "unknown",
+    "attribution": "Replace with reviewed source attribution",
+    "reviewed_at": "2026-08-09T16:00:00Z"
+  }
 }
