@@ -1,5 +1,6 @@
 """Stable plugin API v1."""
 
+from openmacrostate.api.v1.connector_types import FetchRequest, FrozenArtifact, ObservationDraft
 from openmacrostate.api.v1.errors import (
     CaseValidationError,
     ContractError,
@@ -13,7 +14,10 @@ __all__ = [
     "Artifact",
     "Connector",
     "ContractError",
+    "FetchRequest",
+    "FrozenArtifact",
     "ModelAdapter",
     "Observation",
+    "ObservationDraft",
     "OpenMacroStateError",
 ]

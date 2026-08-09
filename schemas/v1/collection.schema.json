@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/collection.schema.json",
+  "title": "OpenMacroState Connector Collection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "collection_id",
+    "case_id",
+    "connector_id",
+    "connector_version",
+    "connector_ruleset_version",
+    "capture_ruleset_version",
+    "engine_version",
+    "capture_mode",
+    "recording_completeness_claim",
+    "source_authentication",
+    "request",
+    "retrieved_at",
+    "transport_retrieved_at_claim",
+    "transport_time_core_observed",
+    "artifact_id",
+    "observation_ids",
+    "normalized_observations_sha256",
+    "raw_sha256",
+    "byte_length"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "collection_id": {"$ref": "#/$defs/stableId"},
+    "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "connector_id": {"$ref": "#/$defs/stableId"},
+    "connector_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "connector_ruleset_version": {"type": "string", "minLength": 1},
+    "capture_ruleset_version": {"type": "string", "minLength": 1},
+    "engine_version": {"type": "string", "minLength": 1},
+    "capture_mode": {"enum": ["live", "recorded"]},
+    "recording_completeness_claim": {
+      "enum": ["complete_response", "test_only_excerpt"]
+    },
+    "source_authentication": {"enum": ["core_observed_https", "unverified_recording"]},
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "url", "accept"],
+      "properties": {
+        "method": {"const": "GET"},
+        "url": {"type": "string", "format": "uri"},
+        "accept": {"enum": ["application/json", "text/html"]}
+      }
+    },
+    "retrieved_at": {"type": "string", "format": "date-time"},
+    "transport_retrieved_at_claim": {"type": "string", "format": "date-time"},
+    "transport_time_core_observed": {"type": "boolean"},
+    "artifact_id": {"$ref": "#/$defs/stableId"},
+    "observation_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/stableId"}
+    },
+    "normalized_observations_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "raw_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "byte_length": {"type": "integer", "minimum": 0}
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{1,255}$"
+    }
+  }
+}

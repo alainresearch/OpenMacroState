@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmacrostate.org/schemas/v1/http-recording.schema.json",
+  "title": "OpenMacroState Secret-Free HTTP Recording v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "recording_kind", "request", "response"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "recording_kind": {"enum": ["complete_response", "test_only_excerpt"]},
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "url", "accept"],
+      "properties": {
+        "method": {"const": "GET"},
+        "url": {"type": "string", "format": "uri"},
+        "accept": {"enum": ["application/json", "text/html"]}
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status_code",
+        "final_url",
+        "headers",
+        "retrieved_at",
+        "body_file",
+        "byte_length",
+        "sha256"
+      ],
+      "properties": {
+        "status_code": {"type": "integer", "minimum": 100, "maximum": 599},
+        "final_url": {"type": "string", "format": "uri"},
+        "headers": {
+          "type": "object",
+          "additionalProperties": {"type": "string"},
+          "propertyNames": {
+            "enum": ["content-type", "date", "etag", "last-modified"]
+          }
+        },
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "body_file": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+        "byte_length": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}

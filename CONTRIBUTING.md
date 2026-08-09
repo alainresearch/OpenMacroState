@@ -21,6 +21,18 @@ a source. A connector contribution normally includes:
 - deterministic fixtures and tests; and
 - a completed license and redistribution assessment.
 
+Read the [connector trust and capture contract](docs/connectors.md) before
+starting. The pre-alpha command line invokes only review-trusted connectors in a
+fixed built-in registry; it does not sandbox or dynamically load arbitrary
+third-party Python. Tests should use recorded, verified responses or clearly
+labeled synthetic/excerpt fixtures. Live access must remain an explicit user
+choice and must never be a fallback when a recording is absent. A recording's
+hash verifies its bytes, not its self-reported capture time; without an
+authenticated proof, offline replay must use the current core replay time for
+eligibility. A recording is also not source authentication: only the fixed
+core-owned live HTTPS path is labeled `core_observed_https`, and that label is
+not a cryptographic source signature.
+
 ### Historical replay cases
 
 Propose or implement a bounded historical question. A case should declare its
@@ -139,6 +151,8 @@ does not replace domain review.
   value is required.
 - Never infer availability solely from the period an observation describes.
 - Keep observation, release, vintage, ingestion, and cutoff times distinct.
+- Never backdate `released_at` or `vintage_at` from an economic observation date
+  or an approximate publication schedule.
 - Label `prospective_capture` and `retrospective_authenticated` honestly; a later
   authenticated reconstruction is not evidence of in-time system capture.
 - Preserve source artifacts or hashes sufficient to audit a transformation.
@@ -173,6 +187,10 @@ official source, use a minimal synthetic fixture, and label the Issue
 technical access restrictions, or source rate limits.
 
 The detailed policy is in [docs/data-licensing.md](docs/data-licensing.md).
+Current project policy excludes FRED and ALFRED connector recordings because
+their terms conflict with software-driven storage, archival, and optional AI
+use. Prefer the originating official publisher and request a new license review
+instead of silently substituting a mirror.
 
 ## AI-assisted contributions
 

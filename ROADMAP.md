@@ -3,6 +3,13 @@
 This roadmap communicates direction, not a delivery promise. Scope and sequencing
 may change after public review. A version ships only when its release gates pass.
 
+Status markers describe the repository on 2026-08-09:
+
+- ✅ implemented and covered by the current pre-alpha contract;
+- 🚧 in active implementation or review;
+- ⏭ next in the agreed source sequence; and
+- ⬜ planned but not started.
+
 ## v0.1 — Macro Time Machine
 
 **Goal:** make one historical macro judgment reproducible under a real
@@ -12,28 +19,50 @@ The current `cases/2023-banks` and `reveals/2023-banks` pair is a synthetic
 software fixture. It tests the boundary but does not itself satisfy the goal of
 an evidence-reviewed historical replay.
 
-Planned capabilities:
+Capability status:
 
-- explicit observation, release, vintage, ingestion, and cutoff timestamps;
-- immutable artifact and observation manifests;
-- claims with evidence links, alternatives, horizons, and falsifiers;
-- a deterministic CLI for replaying bundled cases;
-- physically separate research and post-resolution reveal bundles;
-- at least one polished, evidence-reviewed historical replay in addition to the
-  synthetic `2023-banks` fixture;
-- initial official-source connectors and synthetic test fixtures;
-- human-readable and machine-readable replay output;
-- unit, integration, future-leakage, and accounting-invariant tests; and
-- contributor, governance, security, and data-license foundations.
+- ✅ explicit observation, release, vintage, ingestion, and cutoff timestamps;
+- ✅ immutable artifact and observation manifests with SHA-256 verification;
+- ✅ claims with evidence links, alternatives, horizons, and falsifiers;
+- ✅ a deterministic CLI for validating and replaying bundled cases;
+- ✅ physically separate research and post-resolution reveal bundles;
+- ✅ human-readable and machine-readable replay output;
+- ✅ unit, integration, future-leakage, packaging, and offline replay tests;
+- ✅ contributor, governance, security, and data-license foundations;
+- ✅ the first official-source connector, `frbny-sofr`, with recorded/offline
+  replay, explicit online capture, and conservative SOFR vintage semantics;
+- ⬜ accounting-identity and accounting-invariant tests; and
+- ⬜ at least one polished, evidence-reviewed historical replay in addition to
+  the synthetic `2023-banks` fixture.
+
+The official-source sequence is intentionally narrow:
+
+1. ✅ **New York Fed SOFR** — prospective capture of the secured overnight
+   dollar funding rate from a date-bounded official endpoint;
+2. ⏭ **Treasury Fiscal Data** — Treasury debt or cash-state observations after
+   point-in-time and source-license review; and
+3. ⏭ **Federal Reserve H.4.1** — dated official releases for the Fed balance
+   sheet, avoiding current-only feeds that cannot prove a historical vintage.
+
+FRED and ALFRED are not shortcuts for this sequence. Their current terms conflict
+with the project's software-driven recording and archival workflow; see the
+[data-license policy](docs/data-licensing.md). Connector execution and trust
+boundaries are documented in [docs/connectors.md](docs/connectors.md).
 
 Release gates:
 
-- the documented demo succeeds from a clean supported Python environment;
-- no network or AI key is required for the bundled demonstration;
-- every bundled artifact has provenance and a redistribution decision;
-- the replay fails closed on evidence later than the cutoff;
-- output is deterministic except for declared nondeterministic metadata; and
-- a new contributor can complete one scoped issue using public documentation.
+- [x] the documented synthetic demo succeeds from a clean supported Python
+  environment;
+- [x] no network or AI key is required for the bundled demonstration;
+- [x] every currently bundled artifact has provenance and a redistribution
+  decision;
+- [x] replay fails closed on evidence later than the cutoff;
+- [x] output is deterministic except for declared nondeterministic metadata;
+- [x] the first official connector passes source, security, time-semantics,
+  license, fixture, and offline-replay review;
+- [ ] one real historical replay passes independent evidence review; and
+- [ ] a new contributor completes one scoped Issue using only public
+  documentation and maintainer review.
 
 ## v0.2 — Dollar State Engine
 

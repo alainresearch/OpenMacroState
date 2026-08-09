@@ -22,6 +22,10 @@
 - [ ] This change adds no external data or third-party material; or source terms,
       redistribution status, and attribution are documented.
 - [ ] Fixtures are synthetic or redistribution is clearly permitted.
+- [ ] Connector recordings, if any, are labeled as complete responses,
+      test-only excerpts, or synthetic; required source notices are adjacent.
+- [ ] Live connector access, if any, is explicit and never an offline fallback;
+      originating official sources are used unless a reviewed exception exists.
 - [ ] No credentials, personal data, proprietary data, or material non-public
       information are included.
 
