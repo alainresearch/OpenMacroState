@@ -22,6 +22,7 @@ from openmacrostate.runtime.case import CaseEvaluation, evaluate_case, score_cas
 from openmacrostate.runtime.connectors import run_connector
 from openmacrostate.runtime.http import LiveHttpTransport, RecordedHttpTransport
 from openmacrostate.runtime.jsonio import load_json, write_json, write_jsonl, write_text_atomic
+from openmacrostate.runtime.state_trace import STATE_TRACE_TARGETS, trace_accounting_state
 
 _OUTPUT_MARKER = ".openmacrostate-output.json"
 _OUTPUT_FILES = {
@@ -114,6 +115,19 @@ def _parser() -> argparse.ArgumentParser:
     accounting.add_argument("--rule", required=True)
     accounting.add_argument("--observed-at", required=True)
     accounting.add_argument("--json", action="store_true", dest="as_json")
+
+    trace = subparsers.add_parser(
+        "trace", help="explain experimental state values through verified upstream lineage"
+    )
+    trace_commands = trace.add_subparsers(dest="trace_command", required=True)
+    state = trace_commands.add_parser(
+        "state", help="trace one fixed H.4.1 accounting state derivation"
+    )
+    state.add_argument("case_dir", type=Path)
+    state.add_argument("--rule", required=True)
+    state.add_argument("--observed-at", required=True)
+    state.add_argument("--target", required=True, choices=STATE_TRACE_TARGETS)
+    state.add_argument("--json", action="store_true", dest="as_json")
     return parser
 
 
@@ -140,6 +154,24 @@ def _human_accounting_summary(report: Mapping[str, Any]) -> str:
         f"observed_at={report['observed_at']} | "
         f"residual={report['derived']['balance_sheet_residual']} {report['unit']} | "
         f"tolerance=1 | checks={passed}/{total}"
+    )
+
+
+def _human_state_trace_summary(report: Mapping[str, Any]) -> str:
+    status = "PASS" if report["passed"] else "FAIL"
+    target = str(report["target"])
+    if target == "all":
+        target_summary = "target=all"
+    else:
+        target_id = f"derived:{target}"
+        matches = [node for node in report["nodes"] if node.get("node_id") == target_id]
+        if len(matches) != 1:
+            raise OpenMacroStateError("state trace lacks its requested target node")
+        target_summary = f"target={target} value={matches[0]['value']} {report['unit']}"
+    return (
+        f"{status} state-trace | case={report['case_id']} | {target_summary} | "
+        f"nodes={len(report['nodes'])} edges={len(report['edges'])} | "
+        "causal=false historical_version_authenticated=false"
     )
 
 
@@ -309,6 +341,19 @@ def _write_demo(
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.command == "trace":
+            evaluation = evaluate_case(args.case_dir)
+            report = trace_accounting_state(
+                evaluation,
+                args.rule,
+                args.observed_at,
+                args.target,
+            )
+            if args.as_json:
+                print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+            else:
+                print(_human_state_trace_summary(report))
+            return 0 if report["passed"] else 2
         if args.command == "audit":
             evaluation = evaluate_case(args.case_dir)
             report = audit_accounting(

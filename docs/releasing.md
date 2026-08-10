@@ -52,14 +52,18 @@ The Release Manager:
      --rule fed-h41-balance-sheet-v1 \
      --observed-at 2023-03-15T00:00:00Z \
      --json
+   openmacrostate trace state build/fed-h41-release \
+     --rule fed-h41-balance-sheet-v1 \
+     --observed-at 2023-03-15T00:00:00Z \
+     --target balance_sheet_residual \
+     --json
    python -m build
    ```
 
-5. installs the built wheel into an empty environment outside the checkout and
-   runs both `openmacrostate example 2023-banks --output wheel-demo` and the
-   bundled offline SOFR, Treasury, and H.4.1 recordings through the installed
-   connectors and validator, then runs the Fed accounting audit against the
-   installed H.4.1 capture;
+5. installs the built wheel and source distribution into separate empty
+   environments outside the checkout, runs the bundled example and connector
+   recordings through the installed packages, then runs the Fed accounting
+   audit and state trace against each installed H.4.1 capture;
 6. confirms the source distribution contains `schemas/`, `cases/`, and
    `reveals/` rather than testing only an editable checkout;
 7. inspects the demo manifest and distributions rather than relying only on a

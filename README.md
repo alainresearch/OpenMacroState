@@ -3,7 +3,7 @@
 [![CI](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml/badge.svg)](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml)
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue.svg)](https://www.python.org/)
 [![Code/docs: Apache-2.0](https://img.shields.io/badge/code%20%26%20docs-Apache--2.0-blue.svg)](LICENSE)
-[![Pre-release: v0.1.0a5](https://img.shields.io/badge/pre--release-v0.1.0a5-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a5)
+[![Pre-release: v0.1.0a6](https://img.shields.io/badge/pre--release-v0.1.0a6-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6)
 
 **An auditable, point-in-time operating system for global macro research.**
 
@@ -57,12 +57,14 @@ cases may change before the first stable release. Today the repository provides
 a public research contract, versioned interchange schemas, public plugin
 protocols, an executable offline validator/demo, and three pre-alpha
 official-source capture paths. It also includes one fixed experimental H.4.1
-accounting audit; this is not yet a general or stable state-graph interface.
+accounting audit and a read-only trace from derived values back to their accepted
+observations and preserved artifact. This is not yet a general or stable
+state-graph interface.
 These connectors are not stable historical evidence packs. The repository still
 does **not** ship a production model adapter or a reviewed real historical replay,
 and it is not a production trading or policy system.
 
-The current public pre-release is [v0.1.0a5](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a5).
+The current public pre-release is [v0.1.0a6](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6).
 Its wheel and source archive are available from GitHub Releases only;
 OpenMacroState has not been published to PyPI. To help shape the next milestone,
 review the Draft [2023 banking-stress replay RFC](https://github.com/alainresearch/OpenMacroState/pull/18)
@@ -187,6 +189,22 @@ create a stable public accounting schema. See the
 [accounting audit guide](docs/accounting-audit.md) and dedicated
 [H.4.1 source contract](docs/fed-h41-source-contract.md).
 
+The experimental state trace can then explain one derived value's exact
+arithmetic lineage:
+
+```bash
+oms trace state build/fed-h41-release \
+  --rule fed-h41-balance-sheet-v1 \
+  --observed-at 2023-03-15T00:00:00Z \
+  --target balance_sheet_residual
+```
+
+`--target all --json` emits the full fixed graph: seven reported facts, six
+derived facts, and twelve explicitly non-causal dependency edges. It inherits
+the audit, snapshot, artifact, parser, time, and authentication hashes, but
+remains a retrospective reconstruction rather than proof of 2023 availability
+or causality. See the [state-trace guide](docs/state-trace.md).
+
 ## The problem it addresses
 
 Macro research is unusually vulnerable to hindsight:
@@ -254,8 +272,8 @@ testing, and attribution standards as human-written work.
 src/openmacrostate/
   api/v1/         public value types, errors, and connector/model protocols
   connectors/     fixed registry of review-trusted built-in connectors
-  runtime/        case loading, checksums, cutoff filtering, accounting, and scoring
-  cli.py          validation, demos, connector capture, and experimental audit commands
+  runtime/        case loading, cutoff filtering, accounting, state tracing, and scoring
+  cli.py          validation, captures, demos, audits, and experimental trace commands
 schemas/v1/       JSON Schema interchange contracts
 cases/2023-banks/ synthetic offline teaching fixture (not historical evidence)
 reveals/2023-banks/ separate synthetic post-resolution outcome bundle
@@ -349,8 +367,10 @@ advice. Source data can be incomplete, revised, delayed, or wrong.
 带日期发布页连接器 `fed-h41-release`。三者都采用保守时间规则：今天抓取到的
 历史值，不会被倒填成系统在当年已经捕获的证据。H.4.1 还提供首个实验性会计
 校验，用固定 100 万美元容差核对“总资产 = 总负债 + 总资本”，但尚未形成稳定
-会计 schema 或通用状态图。详见 [Connector 契约](docs/connectors.md)与
-[会计校验说明](docs/accounting-audit.md)。
+会计 schema 或通用状态图。新的实验性 state trace 可以把会计派生值逐步追溯到
+七条合格观测、原始材料哈希和解析规则；所有边都明确标为非因果，也不会把今天
+的重算冒充成 2023 年已经知道的结论。详见 [Connector 契约](docs/connectors.md)、
+[会计校验说明](docs/accounting-audit.md)与[状态追溯说明](docs/state-trace.md)。
 
 快速运行：
 

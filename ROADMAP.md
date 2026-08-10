@@ -76,6 +76,15 @@ Release gates:
 
 **Goal:** represent and trace the balance-sheet state of the dollar system.
 
+Current bridge from v0.1:
+
+- 🚧 a fixed experimental H.4.1 trace projects seven exact-replayed reported
+  facts and six deterministic derived facts into a non-causal dependency DAG;
+- 🚧 RFC 0002 is in Draft review for node/value separation, lineage, revision,
+  conflict, and F/I/P/S semantics; and
+- ⬜ no stable graph schema, cross-source join, causal edge, or user-authored
+  state definition has graduated.
+
 Candidate scope:
 
 - Federal Reserve, Treasury, commercial-bank, dealer, non-bank, and foreign nodes;
