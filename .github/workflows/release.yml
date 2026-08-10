@@ -66,6 +66,11 @@ jobs:
             --rule fed-h41-balance-sheet-v1 \
             --observed-at 2023-03-15T00:00:00Z \
             --json
+          openmacrostate trace state build/fed-h41-release \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --target balance_sheet_residual \
+            --json
       - name: Build distributions
         run: python -m build
       - name: Smoke-test the built wheel outside the checkout
@@ -94,6 +99,11 @@ jobs:
             --rule fed-h41-balance-sheet-v1 \
             --observed-at 2023-03-15T00:00:00Z \
             --json
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" trace state wheel-h41 \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --target balance_sheet_residual \
+            --json
           test -f wheel-demo/snapshot.json
           test -f wheel-demo/scores.json
           test -f wheel-sofr/collection.json
@@ -110,6 +120,31 @@ jobs:
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/treasury_debt_to_penny/recording.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/fed_h41_release/recording.json'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/fed_h41_release/response.html'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/src/openmacrostate/runtime/state_trace.py'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/docs/state-trace.md'
+      - name: Smoke-test the source distribution outside the checkout
+        run: |
+          python -m venv build/sdist-smoke
+          build/sdist-smoke/bin/python -m pip install dist/*.tar.gz
+          pushd "$RUNNER_TEMP"
+          "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" example 2023-banks --output sdist-demo
+          "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" connector capture fed-h41-release \
+            --start 2023-03-16 --end 2023-03-16 \
+            --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/fed_h41_release/recording.json" \
+            --output sdist-h41
+          "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" validate sdist-h41
+          "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" audit accounting sdist-h41 \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --json
+          "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" trace state sdist-h41 \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --target balance_sheet_residual \
+            --json
+          test -f sdist-demo/snapshot.json
+          test -f sdist-h41/collection.json
+          popd
       - name: Upload candidate distributions
         uses: actions/upload-artifact@v7
         with:

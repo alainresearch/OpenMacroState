@@ -113,3 +113,7 @@ questions in the case and artifact metadata.
 
 A reusable state graph, user-defined identities, derived nodes, or a stable
 machine contract requires a separately reviewed RFC and versioned schemas.
+
+The current fixed audit can also be projected into a read-only experimental
+upstream trace. That projection adds no stable schema and does not alter the
+audit report; see the [state-trace guide](state-trace.md).

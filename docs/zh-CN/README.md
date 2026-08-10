@@ -63,6 +63,21 @@ oms audit accounting build/fed-h41-release \
 [H.4.1 来源契约](../fed-h41-source-contract.md)
 与[会计校验说明](../accounting-audit.md)。
 
+同一个封存案例还可以追溯某个派生值的完整上游路径：
+
+```bash
+oms trace state build/fed-h41-release \
+  --rule fed-h41-balance-sheet-v1 \
+  --observed-at 2023-03-15T00:00:00Z \
+  --target balance_sheet_residual
+```
+
+实验输出把“命题属于事实、推断、预测还是情景”和“数值来自报告、计算、假设
+还是模型”分开。本切片只生成七个 `fact/reported` 节点、六个
+`fact/derived` 节点和明确标记为非因果的计算依赖边，不会凭空生成推断、预测或
+情景。它会继承案例快照、原始材料、解析规则和时间边界，但仍然只是事后重算，
+不能证明研究者在 2023 年已经得到该结果。详见[状态追溯说明](../state-trace.md)。
+
 当前项目政策不允许使用 FRED/ALFRED 作为 connector 录制源。它们的版本语义很有用，
 但现行条款与本项目所必需的软件开发、存储、归档及可选 AI 分析冲突。项目优先
 连接原始官方发布者。详细边界见 [Connector 契约](../connectors.md)和
