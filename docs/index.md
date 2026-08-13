@@ -13,6 +13,7 @@ research. Start with:
 - [Contribution guide](../CONTRIBUTING.md)
 - [Governance](../GOVERNANCE.md)
 - [RFC process](rfcs/README.md)
+- [Draft RFC 0001: 2023 US banking-stress replay](rfcs/0001-2023-us-bank-stress-replay.md)
 - [Triage](triage.md)
 - [Release process](releasing.md)
 - [中文介绍](zh-CN/README.md)
