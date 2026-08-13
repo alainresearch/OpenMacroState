@@ -107,3 +107,69 @@ jobs:
             build/treasury-debt-to-penny
             build/fed-h41-release
           if-no-files-found: error
+  windows-offline-demo:
+    name: Offline replay demo (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pip install tzdata
+      - name: Verify America/New_York calendar with tzdata
+        shell: bash
+        run: |
+          python -c "from zoneinfo import ZoneInfo; from datetime import datetime; print(datetime.now(ZoneInfo('America/New_York')))"
+          python -m pytest tests/test_connectors.py::test_effective_date_bound_uses_new_york_calendar_date
+      - name: Run bundled case
+        shell: bash
+        run: openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
+      - name: Replay the SOFR connector fixture offline
+        shell: bash
+        run: |
+          openmacrostate connector capture frbny-sofr \
+            --start 2023-03-22 --end 2023-03-22 \
+            --recording tests/fixtures/connectors/frbny_sofr/recording.json \
+            --output build/frbny-sofr
+          openmacrostate validate build/frbny-sofr
+      - name: Replay the Treasury connector fixture offline
+        shell: bash
+        run: |
+          openmacrostate connector capture treasury-debt-to-penny \
+            --start 2026-08-05 --end 2026-08-06 \
+            --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
+            --output build/treasury-debt-to-penny
+          openmacrostate validate build/treasury-debt-to-penny
+      - name: Replay the H.4.1 connector fixture offline
+        shell: bash
+        run: |
+          openmacrostate connector capture fed-h41-release \
+            --start 2023-03-16 --end 2023-03-16 \
+            --recording tests/fixtures/connectors/fed_h41_release/recording.json \
+            --output build/fed-h41-release
+          openmacrostate validate build/fed-h41-release
+          openmacrostate audit accounting build/fed-h41-release \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --json
+          openmacrostate trace state build/fed-h41-release \
+            --rule fed-h41-balance-sheet-v1 \
+            --observed-at 2023-03-15T00:00:00Z \
+            --target balance_sheet_residual \
+            --json
+      - name: Upload replay artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-offline-replay-artifacts
+          path: |
+            build/demo
+            build/frbny-sofr
+            build/treasury-debt-to-penny
+            build/fed-h41-release
+          if-no-files-found: error
