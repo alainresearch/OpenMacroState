@@ -2,7 +2,7 @@
 
 `response.html` is a small, hand-selected HTML excerpt derived from the Board of
 Governors of the Federal Reserve System's dated H.4.1 release for March 16,
-2023. It retains five reported Wednesday values and the minimum table structure
+2023. It retains seven reported Wednesday values and the minimum table structure
 needed to test the parser. It excludes site chrome, seals, logos, scripts,
 styles, footnotes, and all unrelated rows.
 

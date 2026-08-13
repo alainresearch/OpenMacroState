@@ -35,9 +35,10 @@ Capability status:
   fixed single-page Debt to the Penny query, offline replay, and conservative
   release/vintage semantics;
 - ✅ the third official-source connector, `fed-h41-release`, with dated Board
-  HTML capture, five balance-sheet state variables, semantic column binding,
+  HTML capture, seven balance-sheet state variables, semantic column binding,
   and conservative historical-version semantics;
-- ⬜ accounting-identity and accounting-invariant tests; and
+- ✅ the first fixed experimental accounting audit, checking the H.4.1 identity
+  `assets = liabilities + capital` within 1 reported `USD_million`; and
 - ⬜ at least one polished, evidence-reviewed historical replay in addition to
   the synthetic `2023-banks` fixture.
 
@@ -75,11 +76,21 @@ Release gates:
 
 **Goal:** represent and trace the balance-sheet state of the dollar system.
 
+Current bridge from v0.1:
+
+- 🚧 a fixed experimental H.4.1 trace projects seven exact-replayed reported
+  facts and six deterministic derived facts into a non-causal dependency DAG;
+- 🚧 RFC 0002 is in Draft review for node/value separation, lineage, revision,
+  conflict, and F/I/P/S semantics; and
+- ⬜ no stable graph schema, cross-source join, causal edge, or user-authored
+  state definition has graduated.
+
 Candidate scope:
 
 - Federal Reserve, Treasury, commercial-bank, dealer, non-bank, and foreign nodes;
 - reserves, Treasury supply, repo, dealer balance sheets, basis, and FX swaps;
-- reusable accounting identities and unit checks;
+- reusable accounting identities, unit checks, and a reviewed stable state-graph
+  contract beyond the fixed experimental H.4.1 audit;
 - a `trace` workflow for inspecting proposed transmission chains;
 - more official-source connectors and release-calendar metadata; and
 - replay cases covering distinct liquidity and funding regimes.

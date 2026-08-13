@@ -102,11 +102,13 @@ def test_registry_and_plan_expose_one_fixed_dated_html_request() -> None:
         )
 
 
-def test_normalizer_selects_five_wednesday_stock_values() -> None:
+def test_normalizer_selects_seven_wednesday_stock_values() -> None:
     records = tuple(FedH41ReleaseConnector().normalize(_frozen()))
 
     assert [record.series_id for record in records] == [
         "fed.h41.total_assets",
+        "fed.h41.total_liabilities",
+        "fed.h41.total_capital",
         "fed.h41.securities_held_outright",
         "fed.h41.primary_credit",
         "fed.h41.treasury_general_account",
@@ -114,6 +116,8 @@ def test_normalizer_selects_five_wednesday_stock_values() -> None:
     ]
     assert [record.value for record in records] == [
         "8639300",
+        "8596799",
+        "42501",
         "7940014",
         "152853",
         "277643",
@@ -133,6 +137,29 @@ def test_normalizer_selects_five_wednesday_stock_values() -> None:
         record.extensions["observed_at_convention"] == "canonical_utc_date_anchor_not_instant"
         for record in records
     )
+    assert {record.extensions["parser_id"] for record in records} == {
+        "fed-h41-release-normalization/3"
+    }
+    accounting = {
+        record.series_id: record.extensions["org.openmacrostate.accounting"] for record in records
+    }
+    assert accounting["fed.h41.total_assets"] == {
+        "boundary_id": "us.federal_reserve_banks.consolidated",
+        "statement_id": "fed.h41.table5",
+        "side": "asset",
+        "role": "total",
+        "stock_flow": "stock",
+    }
+    assert accounting["fed.h41.total_liabilities"]["side"] == "liability"
+    assert accounting["fed.h41.total_capital"]["side"] == "capital"
+    assert accounting["fed.h41.primary_credit"] == {
+        "boundary_id": "us.federal_reserve_banks.consolidated",
+        "statement_id": "fed.h41.table1",
+        "side": "asset",
+        "role": "component",
+        "stock_flow": "stock",
+    }
+    assert accounting["fed.h41.reserve_balances"]["side"] == "liability"
 
 
 def test_recorded_capture_is_a_valid_prospective_case(tmp_path: Path) -> None:
@@ -142,7 +169,7 @@ def test_recorded_capture_is_a_valid_prospective_case(tmp_path: Path) -> None:
 
     assert capture.case_id.startswith("capture-fed-h41-release-")
     assert len(capture.case_id.rsplit("-", 1)[-1]) == 32
-    assert evaluation.summary()["accepted_observations"] == 5
+    assert evaluation.summary()["accepted_observations"] == 7
     assert evaluation.summary()["quarantined_observations"] == 0
     assert evaluation.summary()["historical_evidence"] is False
     assert evaluation.case["information_cutoff"] == CORE_TIME
@@ -253,6 +280,17 @@ def test_old_release_page_cannot_pass_an_old_information_cutoff(tmp_path: Path) 
             ),
             "exactly one row",
         ),
+        (
+            lambda: _replace("Total liabilities", "Total liabilities and capital", count=1),
+            "Total liabilities",
+        ),
+        (
+            lambda: _replace(
+                'header="t8r1c1 t8h1c3">42,501',
+                'header="t8r1c1 t8h2c1">42,501',
+            ),
+            "Wednesday stock column",
+        ),
     ],
 )
 def test_structure_date_and_semantic_drift_fail_closed(body, message: str) -> None:
@@ -339,6 +377,41 @@ def test_table_semantics_require_adjacent_sibling_paragraphs() -> None:
         tuple(FedH41ReleaseConnector().normalize(_frozen(text.encode("utf-8"))))
 
 
+def test_selected_table_requires_an_unstyled_plain_div_parent() -> None:
+    text = _body().decode("utf-8")
+    opening = (
+        "<div>\n  <p><span>5.</span> <span>Consolidated Statement of Condition of All "
+        "Federal Reserve Banks (continued)</span></p>"
+    )
+    assert text.count(opening) == 1
+    text = text.replace(
+        "</head>",
+        "<style>.arbitrary-red-team-name { display: none; }</style></head>",
+    ).replace(opening, opening.replace("<div>", '<div class="arbitrary-red-team-name">'))
+
+    with pytest.raises(ContractError, match="immediate plain div parent"):
+        tuple(FedH41ReleaseConnector().normalize(_frozen(text.encode("utf-8"))))
+
+
+@pytest.mark.parametrize("container", ["details", "dialog"])
+def test_closed_native_container_ancestors_are_hidden(container: str) -> None:
+    text = _body().decode("utf-8")
+    opening = (
+        "<div>\n  <p><span>5.</span> <span>Consolidated Statement of Condition of All "
+        "Federal Reserve Banks (continued)</span></p>"
+    )
+    ending = "  </table>\n  </div>\n</body>"
+    assert text.count(opening) == 1
+    assert text.count(ending) == 1
+    text = text.replace(opening, f"<{container}>{opening}").replace(
+        ending,
+        f"  </table>\n  </div></{container}>\n</body>",
+    )
+
+    with pytest.raises(ContractError, match="must not be hidden"):
+        tuple(FedH41ReleaseConnector().normalize(_frozen(text.encode("utf-8"))))
+
+
 def test_relevant_cells_require_unique_ids_and_explicit_table_rows() -> None:
     duplicate_attribute = _replace('id="t1r16c1"', 'id="t1r16c1" id="ignored"', count=1)
     with pytest.raises(ContractError, match="duplicate id attributes"):
@@ -412,7 +485,7 @@ def test_current_inline_release_date_variant_is_supported() -> None:
     )
 
     records = tuple(FedH41ReleaseConnector().normalize(_frozen(body)))
-    assert len(records) == 5
+    assert len(records) == 7
 
 
 def test_utf8_endpoint_and_new_york_future_bound_fail_closed() -> None:
@@ -428,7 +501,7 @@ def test_utf8_endpoint_and_new_york_future_bound_fail_closed() -> None:
 
     # UTC and New York are both on the release date after the usual publication window.
     records = tuple(connector.normalize(_frozen(retrieved_at="2023-03-16T21:30:00Z")))
-    assert len(records) == 5
+    assert len(records) == 7
 
 
 def test_recorded_h41_cli_is_offline(tmp_path: Path, monkeypatch, capsys) -> None:
@@ -456,4 +529,4 @@ def test_recorded_h41_cli_is_offline(tmp_path: Path, monkeypatch, capsys) -> Non
         == 0
     )
     assert "mode=recorded" in capsys.readouterr().out
-    assert evaluate_case(output).summary()["accepted_observations"] == 5
+    assert evaluate_case(output).summary()["accepted_observations"] == 7
