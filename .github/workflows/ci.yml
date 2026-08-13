@@ -126,6 +126,7 @@ jobs:
         shell: bash
         run: |
           python -c "from zoneinfo import ZoneInfo; from datetime import datetime; print(datetime.now(ZoneInfo('America/New_York')))"
+          python -m pytest tests/test_connectors.py::test_effective_date_bound_uses_new_york_calendar_date
       - name: Run bundled case
         shell: bash
         run: openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
