@@ -8,6 +8,7 @@ import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
+from openmacrostate.runtime.http import inspect_http_recording
 
 from openmacrostate import __version__
 from openmacrostate.api.v1.errors import OpenMacroStateError
@@ -82,6 +83,12 @@ def _parser() -> argparse.ArgumentParser:
         "list", help="list built-in review-trusted connectors and metadata"
     )
     list_connectors.add_argument("--json", action="store_true", dest="as_json")
+    inspect = connector_commands.add_parser(
+        "inspect-recording", 
+        help="validate an HTTP recording completely offline"
+    )
+    inspect.add_argument("recording", type=Path)
+    inspect.add_argument("--json", action="store_true", dest="as_json")
 
     capture = connector_commands.add_parser(
         "capture", help="write a new, complete capture case without overwriting"
@@ -393,6 +400,33 @@ def main(argv: Sequence[str] | None = None) -> int:
                             ]
                         )
                     print("\n".join(lines).rstrip())
+                return 0
+            if args.connector_command == "inspect-recording":
+                from openmacrostate.runtime.http import inspect_http_recording
+                
+                record = inspect_http_recording(args.recording)
+                response = record["response"]
+                
+                output = {
+                    "valid": True,
+                    "recording_kind": record["recording_kind"],
+                    "recording_kind_claim": "self-reported completeness claim",
+                    "retrieved_at": response["retrieved_at"],
+                    "retrieved_at_claim": "unauthenticated receipt claim",
+                    "source_authenticated": False,
+                    "historical_eligibility_established": False,
+                }
+                
+                if args.as_json:
+                    print(json.dumps(output, ensure_ascii=False, sort_keys=True))
+                else:
+                    print("PASS HTTP recording")
+                    print(f"recording_kind: {record['recording_kind']}")
+                    print("  claim: self-reported completeness claim")
+                    print(f"retrieved_at: {response['retrieved_at']}")
+                    print("  claim: unauthenticated receipt claim")
+                    print("source authentication: not established")
+                    print("historical eligibility: not established")
                 return 0
             if args.recording is None and not args.online:
                 raise OpenMacroStateError(

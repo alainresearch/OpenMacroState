@@ -6,6 +6,8 @@ import math
 import ssl
 import urllib.error
 import urllib.request
+import json
+
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
@@ -115,6 +117,60 @@ class LiveHttpTransport:
             ) from exc
         except (urllib.error.URLError, OSError, TimeoutError) as exc:
             raise ContractError(f"HTTP retrieval failed: {exc}") from exc
+
+
+def inspect_http_recording(recording_path: str | Path) -> dict[str, object]:
+    path = Path(recording_path).absolute()
+    
+    if path.is_symlink() or not path.is_file():
+        raise ContractError("recording must be a regular file, not a symbolic link")
+    if path.lstat().st_nlink != 1:
+        raise ContractError("recording must not be hard linked")
+
+    # This relies on your existing schema validation in load_json
+    record = load_json(path)
+    response = record.get("response", {})
+    
+    if not isinstance(response, dict):
+        raise ContractError("Invalid response format in recording")
+
+    relative = Path(response.get("body_file", ""))
+    root = path.parent.resolve()
+
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ContractError("HTTP recording body_file escapes the fixture directory")
+
+    candidate = root / relative
+    current = root
+    for part in relative.parts:
+        current /= part
+        if current.is_symlink():
+            raise ContractError("HTTP recording body_file must not traverse a symbolic link")
+
+    resolved = candidate.resolve()
+    if resolved == root or root not in resolved.parents:
+        raise ContractError("HTTP recording body_file escapes the fixture directory")
+
+    if not resolved.is_file() or resolved.lstat().st_nlink != 1:
+        raise ContractError("HTTP recording body_file must be a regular unlinked file")
+
+    expected_length = response.get("byte_length", 0)
+    if resolved.stat().st_size != expected_length:
+        raise ContractError("HTTP recording body byte length does not match its manifest")
+
+    try:
+        body = resolved.read_bytes()
+    except OSError as exc:
+        raise ContractError(f"cannot read HTTP recording body: {exc}") from exc
+
+    if len(body) != expected_length:
+        raise ContractError("HTTP recording body byte length does not match its manifest")
+
+    expected_sha256 = response.get("sha256", "")
+    if sha256_bytes(body) != expected_sha256:
+        raise ContractError("HTTP recording body SHA-256 does not match its manifest")
+
+    return record
 
 
 class RecordedHttpTransport:
