@@ -17,7 +17,7 @@ from typing import Protocol
 from openmacrostate.api.v1.connector_types import FetchRequest, TransportResponse
 from openmacrostate.api.v1.errors import ContractError
 from openmacrostate.api.v1.types import SCHEMA_VERSION, parse_timestamp
-from openmacrostate.runtime.jsonio import load_json, sha256_bytes
+from openmacrostate.runtime.jsonio import load_json, sha256_bytes, sha256_file
 
 _RESPONSE_HEADERS = frozenset({"content-type", "date", "etag", "last-modified"})
 
@@ -119,6 +119,131 @@ class LiveHttpTransport:
             raise ContractError(f"HTTP retrieval failed: {exc}") from exc
 
 
+def _validate_http_recording(record: object) -> dict[str, object]:
+    if not isinstance(record, dict):
+        raise ContractError("HTTP recording must be a JSON object")
+
+    allowed = {"schema_version", "recording_kind", "request", "response"}
+    if set(record) != allowed:
+        raise ContractError("HTTP recording has unsupported or unknown top-level fields")
+
+    if record["schema_version"] != SCHEMA_VERSION:
+        raise ContractError("HTTP recording has unsupported schema_version")
+
+    if record["recording_kind"] not in {
+        "complete_response",
+        "test_only_excerpt",
+    }:
+        raise ContractError("HTTP recording_kind is invalid")
+
+    request_record = record["request"]
+    response_record = record["response"]
+
+    if not isinstance(request_record, dict):
+        raise ContractError("HTTP recording request must be an object")
+
+    if not isinstance(response_record, dict):
+        raise ContractError("HTTP recording response must be an object")
+
+    if set(request_record) != {"method", "url", "accept"}:
+        raise ContractError("HTTP recording request has unknown or missing fields")
+
+    method = request_record["method"]
+    url = request_record["url"]
+    accept = request_record["accept"]
+
+    if not isinstance(method, str) or not method:
+        raise ContractError("HTTP recording request method must be a non-empty string")
+
+    if not isinstance(url, str) or not url:
+        raise ContractError("HTTP recording request url must be a non-empty string")
+
+    if not isinstance(accept, str) or not accept:
+        raise ContractError("HTTP recording request accept must be a non-empty string")
+
+    expected_response_fields = {
+        "status_code",
+        "final_url",
+        "headers",
+        "retrieved_at",
+        "body_file",
+        "byte_length",
+        "sha256",
+    }
+
+    if set(response_record) != expected_response_fields:
+        raise ContractError("HTTP recording response has unknown or missing fields")
+
+    status_code = response_record["status_code"]
+
+    if (
+        isinstance(status_code, bool)
+        or not isinstance(status_code, int)
+        or not 100 <= status_code <= 599
+    ):
+        raise ContractError("HTTP recording status_code must be an integer between 100 and 599")
+
+    final_url = response_record["final_url"]
+    if not isinstance(final_url, str) or not final_url:
+        raise ContractError("HTTP recording final_url must be a non-empty string")
+
+    headers = response_record["headers"]
+    if not isinstance(headers, dict):
+        raise ContractError("HTTP recording response headers must be an object")
+
+    for name, value in headers.items():
+        if not isinstance(name, str) or not isinstance(value, str):
+            raise ContractError("HTTP recording response headers must be strings")
+
+    normalized_header_names = [name.lower() for name in headers]
+
+    if len(normalized_header_names) != len(set(normalized_header_names)):
+        raise ContractError("HTTP recording contains duplicate case-insensitive headers")
+
+    unknown_headers = sorted(
+        set(normalized_header_names) - _RESPONSE_HEADERS
+    )
+
+    if unknown_headers:
+        raise ContractError(
+            "HTTP recording contains non-audited response headers: "
+            + ", ".join(unknown_headers)
+        )
+
+    retrieved_at = response_record["retrieved_at"]
+
+    if not isinstance(retrieved_at, str):
+        raise ContractError("HTTP recording retrieved_at must be a string")
+
+    parse_timestamp(retrieved_at, field="retrieved_at")
+
+    body_file = response_record["body_file"]
+
+    if not isinstance(body_file, str) or not body_file:
+        raise ContractError("HTTP recording body_file must be a non-empty string")
+
+    byte_length = response_record["byte_length"]
+
+    if (
+        isinstance(byte_length, bool)
+        or not isinstance(byte_length, int)
+        or byte_length < 0
+    ):
+        raise ContractError(
+            "HTTP recording byte_length must be a non-negative integer"
+        )
+
+    sha256 = response_record["sha256"]
+
+    if (
+        not isinstance(sha256, str)
+        or len(sha256) != 64
+        or any(c not in "0123456789abcdef" for c in sha256)
+    ):
+        raise ContractError("HTTP recording sha256 must be a lowercase SHA-256 digest")
+
+    return record
+
 def inspect_http_recording(recording_path: str | Path) -> dict[str, object]:
     path = Path(recording_path).absolute()
     
@@ -129,7 +254,8 @@ def inspect_http_recording(recording_path: str | Path) -> dict[str, object]:
 
     # This relies on your existing schema validation in load_json
     record = load_json(path)
-    response = record.get("response", {})
+    record=_validate_http_recording(record)
+    response = record["response"]
     
     if not isinstance(response, dict):
         raise ContractError("Invalid response format in recording")
@@ -151,23 +277,20 @@ def inspect_http_recording(recording_path: str | Path) -> dict[str, object]:
     if resolved == root or root not in resolved.parents:
         raise ContractError("HTTP recording body_file escapes the fixture directory")
 
-    if not resolved.is_file() or resolved.lstat().st_nlink != 1:
+    if not resolved.is_file():
         raise ContractError("HTTP recording body_file must be a regular unlinked file")
-
+    if resolved.lstat().st_nlink != 1:
+        raise ContractError("HTTP recording body_file must not be a hard link")
     expected_length = response.get("byte_length", 0)
     if resolved.stat().st_size != expected_length:
         raise ContractError("HTTP recording body byte length does not match its manifest")
 
+    expected_sha256=response["sha256"]
     try:
-        body = resolved.read_bytes()
+        actual_sha256=sha256_file(resolved)
     except OSError as exc:
         raise ContractError(f"cannot read HTTP recording body: {exc}") from exc
-
-    if len(body) != expected_length:
-        raise ContractError("HTTP recording body byte length does not match its manifest")
-
-    expected_sha256 = response.get("sha256", "")
-    if sha256_bytes(body) != expected_sha256:
+    if actual_sha256 != expected_sha256:
         raise ContractError("HTTP recording body SHA-256 does not match its manifest")
 
     return record
@@ -183,31 +306,7 @@ class RecordedHttpTransport:
         if self.recording_path.lstat().st_nlink != 1:
             raise ContractError("recording must not be hard linked")
         record = load_json(self.recording_path)
-        if not isinstance(record, dict):
-            raise ContractError("HTTP recording must be a JSON object")
-        allowed = {"schema_version", "recording_kind", "request", "response"}
-        if set(record) != allowed or record.get("schema_version") != SCHEMA_VERSION:
-            raise ContractError("HTTP recording has unsupported or unknown top-level fields")
-        if record.get("recording_kind") not in {"complete_response", "test_only_excerpt"}:
-            raise ContractError("HTTP recording_kind is invalid")
-        request_record = record.get("request")
-        response_record = record.get("response")
-        if not isinstance(request_record, dict) or not isinstance(response_record, dict):
-            raise ContractError("HTTP recording request and response must be objects")
-        if set(request_record) != {"method", "url", "accept"}:
-            raise ContractError("HTTP recording request has unknown or missing fields")
-        expected_response_fields = {
-            "status_code",
-            "final_url",
-            "headers",
-            "retrieved_at",
-            "body_file",
-            "byte_length",
-            "sha256",
-        }
-        if set(response_record) != expected_response_fields:
-            raise ContractError("HTTP recording response has unknown or missing fields")
-        self._record = record
+        self._record = _validate_http_recording(record)
 
     @property
     def recording_kind(self) -> str:
