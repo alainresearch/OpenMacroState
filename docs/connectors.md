@@ -155,6 +155,51 @@ fields proves historical availability. That stronger claim requires an
 evidence-reviewed case and an accepted authentication path outside this capture
 command.
 
+
+### Offline recording validation
+
+Before using a recorded HTTP response for deterministic replay, you can validate its structural and cryptographic integrity completely offline using the `inspect-recording` command.
+
+This command verifies the JSON schema, ensures the `body_file` path is safe (blocking symlink and directory traversal attacks), and strictly checks that the file's byte length and SHA-256 hash perfectly match the manifest.
+
+**Note:** This command verifies internal consistency and self-reported timestamps. It does *not* establish source authentication or historical eligibility.
+
+***examples***
+
+```bash
+oms connector inspect-recording tests/fixtures/connectors/frbny_sofr/recording.json
+```
+
+Output:
+
+```text
+PASS HTTP recording
+recording_kind: test_only_excerpt
+  claim: self-reported completeness claim
+retrieved_at: 2026-08-09T15:18:38Z
+  claim: unauthenticated receipt claim
+source authentication: not established
+historical eligibility: not established
+```
+
+**JSON output:** For programmatic use, append the `--json` flag:
+
+```bash
+oms connector inspect-recording tests/fixtures/connectors/frbny_sofr/recording.json --json
+```
+
+Output:
+
+```json
+{
+  "historical_eligibility_established": false, 
+  "recording_kind": "test_only_excerpt", 
+  "recording_kind_claim": "self-reported completeness claim", 
+  "retrieved_at": "2026-08-09T15:18:38Z", 
+  "retrieved_at_claim": "unauthenticated receipt claim", 
+  "source_authenticated": false, 
+  "valid": true}
+```
 ## FRBNY SOFR source
 
 The connector uses the New York Fed's date-bounded Markets API rather than a
