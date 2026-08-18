@@ -2,22 +2,24 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
+import os
 import ssl
+import stat
 import urllib.error
 import urllib.request
-import json
-
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from types import MappingProxyType
 from typing import Protocol
+from urllib.parse import urlparse
 
 from openmacrostate.api.v1.connector_types import FetchRequest, TransportResponse
 from openmacrostate.api.v1.errors import ContractError
 from openmacrostate.api.v1.types import SCHEMA_VERSION, parse_timestamp
-from openmacrostate.runtime.jsonio import load_json, sha256_bytes, sha256_file
+from openmacrostate.runtime.jsonio import load_json
 
 _RESPONSE_HEADERS = frozenset({"content-type", "date", "etag", "last-modified"})
 
@@ -54,7 +56,7 @@ class LiveHttpTransport:
     def __init__(self, *, timeout_seconds: float = 20.0) -> None:
         if (
             isinstance(timeout_seconds, bool)
-            or not isinstance(timeout_seconds, (int, float))
+            or not isinstance(timeout_seconds, int | float)
             or not math.isfinite(timeout_seconds)
             or timeout_seconds <= 0
             or timeout_seconds > 120
@@ -119,6 +121,14 @@ class LiveHttpTransport:
             raise ContractError(f"HTTP retrieval failed: {exc}") from exc
 
 
+def _is_uri(value: object) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+
+    parsed = urlparse(value)
+    return bool(parsed.scheme) and not any(character.isspace() for character in value)
+
+
 def _validate_http_recording(record: object) -> dict[str, object]:
     if not isinstance(record, dict):
         raise ContractError("HTTP recording must be a JSON object")
@@ -130,7 +140,10 @@ def _validate_http_recording(record: object) -> dict[str, object]:
     if record["schema_version"] != SCHEMA_VERSION:
         raise ContractError("HTTP recording has unsupported schema_version")
 
-    if record["recording_kind"] not in {
+    recording_kind = record["recording_kind"]
+    if not isinstance(recording_kind, str):
+        raise ContractError("HTTP recording_kind must be a string")
+    if recording_kind not in {
         "complete_response",
         "test_only_excerpt",
     }:
@@ -152,14 +165,14 @@ def _validate_http_recording(record: object) -> dict[str, object]:
     url = request_record["url"]
     accept = request_record["accept"]
 
-    if not isinstance(method, str) or not method:
-        raise ContractError("HTTP recording request method must be a non-empty string")
+    if method != "GET":
+        raise ContractError("HTTP recording request method must be GET")
 
-    if not isinstance(url, str) or not url:
-        raise ContractError("HTTP recording request url must be a non-empty string")
+    if not _is_uri(url):
+        raise ContractError("HTTP recording request url must be valid")
 
-    if not isinstance(accept, str) or not accept:
-        raise ContractError("HTTP recording request accept must be a non-empty string")
+    if not isinstance(accept, str) or accept not in {"application/json", "text/html"}:
+        raise ContractError("HTTP recording request accept must be application/json or text/html")
 
     expected_response_fields = {
         "status_code",
@@ -184,8 +197,8 @@ def _validate_http_recording(record: object) -> dict[str, object]:
         raise ContractError("HTTP recording status_code must be an integer between 100 and 599")
 
     final_url = response_record["final_url"]
-    if not isinstance(final_url, str) or not final_url:
-        raise ContractError("HTTP recording final_url must be a non-empty string")
+    if not _is_uri(final_url):
+        raise ContractError("HTTP recording final_url must be valid")
 
     headers = response_record["headers"]
     if not isinstance(headers, dict):
@@ -196,20 +209,13 @@ def _validate_http_recording(record: object) -> dict[str, object]:
             raise ContractError("HTTP recording response headers must be strings")
 
     normalized_header_names = [name.lower() for name in headers]
-
     if len(normalized_header_names) != len(set(normalized_header_names)):
         raise ContractError("HTTP recording contains duplicate case-insensitive headers")
-
-    unknown_headers = sorted(
-        set(normalized_header_names) - _RESPONSE_HEADERS
-    )
-
+    unknown_headers = sorted(set(normalized_header_names) - _RESPONSE_HEADERS)
     if unknown_headers:
         raise ContractError(
-            "HTTP recording contains non-audited response headers: "
-            + ", ".join(unknown_headers)
+            "HTTP recording contains non-audited response headers: " + ", ".join(unknown_headers)
         )
-
     retrieved_at = response_record["retrieved_at"]
 
     if not isinstance(retrieved_at, str):
@@ -224,14 +230,8 @@ def _validate_http_recording(record: object) -> dict[str, object]:
 
     byte_length = response_record["byte_length"]
 
-    if (
-        isinstance(byte_length, bool)
-        or not isinstance(byte_length, int)
-        or byte_length < 0
-    ):
-        raise ContractError(
-            "HTTP recording byte_length must be a non-negative integer"
-        )
+    if isinstance(byte_length, bool) or not isinstance(byte_length, int) or byte_length < 0:
+        raise ContractError("HTTP recording byte_length must be a non-negative integer")
 
     sha256 = response_record["sha256"]
 
@@ -244,23 +244,154 @@ def _validate_http_recording(record: object) -> dict[str, object]:
 
     return record
 
+
+def _hash_body(path: Path, expected_length: int) -> str:
+    try:
+        initial_stat = path.lstat()
+
+        if not stat.S_ISREG(initial_stat.st_mode):
+            raise ContractError("HTTP recording body must be a regular unlinked file")
+
+        if initial_stat.st_nlink != 1:
+            raise ContractError("HTTP recording body must not be a hard link")
+
+        flags = os.O_RDONLY
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+
+        fd = os.open(path, flags)
+
+        try:
+            opened_stat = os.fstat(fd)
+
+            if not stat.S_ISREG(opened_stat.st_mode):
+                raise ContractError("HTTP recording body must be a regular unlinked file")
+
+            if opened_stat.st_nlink != 1:
+                raise ContractError("HTTP recording body must not be a hard link")
+
+            if (
+                opened_stat.st_dev != initial_stat.st_dev
+                or opened_stat.st_ino != initial_stat.st_ino
+            ):
+                raise ContractError("HTTP recording body changed while being opened")
+
+            if opened_stat.st_size != expected_length:
+                raise ContractError("HTTP recording body byte length does not match its manifest")
+
+            digest = hashlib.sha256()
+            total = 0
+
+            with os.fdopen(fd, "rb", closefd=False) as body:
+                while chunk := body.read(64 * 1024):
+                    total += len(chunk)
+
+                    if total > expected_length:
+                        raise ContractError("HTTP recording body exceeds its manifest byte length")
+
+                    digest.update(chunk)
+
+            if total != expected_length:
+                raise ContractError("HTTP recording body byte length does not match its manifest")
+
+            return digest.hexdigest()
+
+        finally:
+            os.close(fd)
+
+    except ContractError:
+        raise
+    except OSError as exc:
+        raise ContractError(f"cannot read HTTP recording body: {exc}") from exc
+
+
+def _read_and_hash_body(
+    path: Path,
+    expected_length: int,
+    max_bytes: int,
+) -> tuple[bytes, str]:
+    try:
+        initial_stat = path.lstat()
+
+        if not stat.S_ISREG(initial_stat.st_mode):
+            raise ContractError("HTTP recording body must be a regular unlinked file")
+
+        if initial_stat.st_nlink != 1:
+            raise ContractError("HTTP recording body must not be a hard link")
+
+        flags = os.O_RDONLY
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+
+        fd = os.open(path, flags)
+
+        try:
+            opened_stat = os.fstat(fd)
+
+            if not stat.S_ISREG(opened_stat.st_mode):
+                raise ContractError("HTTP recording body must be a regular unlinked file")
+
+            if opened_stat.st_nlink != 1:
+                raise ContractError("HTTP recording body must not be a hard link")
+
+            if (
+                opened_stat.st_dev != initial_stat.st_dev
+                or opened_stat.st_ino != initial_stat.st_ino
+            ):
+                raise ContractError("HTTP recording body changed while being opened")
+
+            if opened_stat.st_size != expected_length:
+                raise ContractError("HTTP recording body byte length does not match its manifest")
+
+            if expected_length > max_bytes:
+                raise ContractError("HTTP recording body exceeds the connector byte limit")
+
+            digest = hashlib.sha256()
+            chunks: list[bytes] = []
+            total = 0
+
+            with os.fdopen(fd, "rb", closefd=False) as body:
+                while chunk := body.read(64 * 1024):
+                    total += len(chunk)
+
+                    if total > expected_length or total > max_bytes:
+                        raise ContractError("HTTP recording body exceeds the connector byte limit")
+
+                    digest.update(chunk)
+                    chunks.append(chunk)
+
+            if total != expected_length:
+                raise ContractError("HTTP recording body byte length does not match its manifest")
+
+            return b"".join(chunks), digest.hexdigest()
+
+        finally:
+            os.close(fd)
+
+    except ContractError:
+        raise
+    except OSError as exc:
+        raise ContractError(f"cannot read HTTP recording body: {exc}") from exc
+
+
 def inspect_http_recording(recording_path: str | Path) -> dict[str, object]:
     path = Path(recording_path).absolute()
-    
+
     if path.is_symlink() or not path.is_file():
         raise ContractError("recording must be a regular file, not a symbolic link")
+
     if path.lstat().st_nlink != 1:
         raise ContractError("recording must not be hard linked")
 
-    # This relies on your existing schema validation in load_json
     record = load_json(path)
-    record=_validate_http_recording(record)
+    record = _validate_http_recording(record)
+
     response = record["response"]
-    
+
     if not isinstance(response, dict):
         raise ContractError("Invalid response format in recording")
 
-    relative = Path(response.get("body_file", ""))
+    relative = Path(response["body_file"])
     root = path.parent.resolve()
 
     if relative.is_absolute() or ".." in relative.parts:
@@ -268,28 +399,26 @@ def inspect_http_recording(recording_path: str | Path) -> dict[str, object]:
 
     candidate = root / relative
     current = root
+
     for part in relative.parts:
         current /= part
+
         if current.is_symlink():
             raise ContractError("HTTP recording body_file must not traverse a symbolic link")
 
     resolved = candidate.resolve()
+
     if resolved == root or root not in resolved.parents:
         raise ContractError("HTTP recording body_file escapes the fixture directory")
 
-    if not resolved.is_file():
-        raise ContractError("HTTP recording body_file must be a regular unlinked file")
-    if resolved.lstat().st_nlink != 1:
-        raise ContractError("HTTP recording body_file must not be a hard link")
-    expected_length = response.get("byte_length", 0)
-    if resolved.stat().st_size != expected_length:
-        raise ContractError("HTTP recording body byte length does not match its manifest")
+    expected_length = response["byte_length"]
+    expected_sha256 = response["sha256"]
 
-    expected_sha256=response["sha256"]
-    try:
-        actual_sha256=sha256_file(resolved)
-    except OSError as exc:
-        raise ContractError(f"cannot read HTTP recording body: {exc}") from exc
+    actual_sha256 = _hash_body(
+        resolved,
+        expected_length,
+    )
+
     if actual_sha256 != expected_sha256:
         raise ContractError("HTTP recording body SHA-256 does not match its manifest")
 
@@ -336,61 +465,39 @@ class RecordedHttpTransport:
     def fetch(self, request: FetchRequest) -> TransportResponse:
         request_record = self._record["request"]
         assert isinstance(request_record, dict)
+
         if (
-            request_record.get("method") != request.method
-            or request_record.get("url") != request.url
-            or request_record.get("accept") != request.accept
+            request_record["method"] != request.method
+            or request_record["url"] != request.url
+            or request_record["accept"] != request.accept
         ):
             raise ContractError("HTTP recording does not match the planned request")
+
         response = self._record["response"]
         assert isinstance(response, dict)
+
         path = self._body_path(response["body_file"])
-        expected_length = response.get("byte_length")
-        if (
-            isinstance(expected_length, bool)
-            or not isinstance(expected_length, int)
-            or expected_length < 0
-            or expected_length > request.max_bytes
-            or path.stat().st_size != expected_length
-        ):
+
+        expected_length = response["byte_length"]
+
+        if expected_length > request.max_bytes:
             raise ContractError("HTTP recording body byte length does not match its manifest")
-        try:
-            body = path.read_bytes()
-        except OSError as exc:
-            raise ContractError(f"cannot read HTTP recording body: {exc}") from exc
-        expected_sha256 = response.get("sha256")
-        if len(body) != expected_length:
-            raise ContractError("HTTP recording body byte length does not match its manifest")
-        if not isinstance(expected_sha256, str) or sha256_bytes(body) != expected_sha256:
+
+        expected_sha256 = response["sha256"]
+
+        body, actual_sha256 = _read_and_hash_body(
+            path,
+            expected_length,
+            request.max_bytes,
+        )
+
+        if actual_sha256 != expected_sha256:
             raise ContractError("HTTP recording body SHA-256 does not match its manifest")
-        headers = response.get("headers")
-        if not isinstance(headers, dict) or any(
-            not isinstance(key, str) or not isinstance(value, str) for key, value in headers.items()
-        ):
-            raise ContractError("HTTP recording response headers must be strings")
-        normalized_header_names = [name.lower() for name in headers]
-        if len(normalized_header_names) != len(set(normalized_header_names)):
-            raise ContractError("HTTP recording contains duplicate case-insensitive headers")
-        unknown_headers = sorted(set(normalized_header_names) - _RESPONSE_HEADERS)
-        if unknown_headers:
-            raise ContractError(
-                "HTTP recording contains non-audited response headers: "
-                + ", ".join(unknown_headers)
-            )
-        retrieved_at = response.get("retrieved_at")
-        if not isinstance(retrieved_at, str):
-            raise ContractError("HTTP recording retrieved_at must be a string")
-        parse_timestamp(retrieved_at, field="retrieved_at")
-        status_code = response.get("status_code")
-        final_url = response.get("final_url")
-        if isinstance(status_code, bool) or not isinstance(status_code, int):
-            raise ContractError("HTTP recording status_code must be an integer")
-        if not isinstance(final_url, str):
-            raise ContractError("HTTP recording final_url must be a string")
+
         return TransportResponse(
-            status_code=status_code,
-            final_url=final_url,
-            headers=_filtered_headers(headers),
-            retrieved_at=retrieved_at,
+            status_code=response["status_code"],
+            final_url=response["final_url"],
+            headers=_filtered_headers(response["headers"]),
+            retrieved_at=response["retrieved_at"],
             body=body,
         )

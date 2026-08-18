@@ -8,7 +8,6 @@ import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
-from openmacrostate.runtime.http import inspect_http_recording
 
 from openmacrostate import __version__
 from openmacrostate.api.v1.errors import OpenMacroStateError
@@ -84,8 +83,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     list_connectors.add_argument("--json", action="store_true", dest="as_json")
     inspect = connector_commands.add_parser(
-        "inspect-recording", 
-        help="validate an HTTP recording completely offline"
+        "inspect-recording", help="validate an HTTP recording completely offline"
     )
     inspect.add_argument("recording", type=Path)
     inspect.add_argument("--json", action="store_true", dest="as_json")
@@ -403,10 +401,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return 0
             if args.connector_command == "inspect-recording":
                 from openmacrostate.runtime.http import inspect_http_recording
-                
+
                 record = inspect_http_recording(args.recording)
                 response = record["response"]
-                
+
                 output = {
                     "valid": True,
                     "recording_kind": record["recording_kind"],
@@ -416,7 +414,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "source_authenticated": False,
                     "historical_eligibility_established": False,
                 }
-                
+
                 if args.as_json:
                     print(json.dumps(output, ensure_ascii=False, sort_keys=True))
                 else:
