@@ -80,7 +80,11 @@ def _capture(output: Path):
 
 
 def test_registry_and_plan_expose_one_fixed_bounded_request() -> None:
-    assert builtin_connector_ids() == ("frbny-sofr", "treasury-debt-to-penny")
+    assert builtin_connector_ids() == (
+        "fed-h41-release",
+        "frbny-sofr",
+        "treasury-debt-to-penny",
+    )
     connector = get_builtin_connector("treasury-debt-to-penny")
     assert type(connector) is TreasuryDebtToPennyConnector
 

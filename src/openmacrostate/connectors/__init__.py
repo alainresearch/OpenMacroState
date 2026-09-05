@@ -10,10 +10,12 @@ from typing import Any
 
 from openmacrostate.api.v1.errors import ContractError
 from openmacrostate.api.v1.interfaces import Connector
+from openmacrostate.connectors.fed_h41_release import FedH41ReleaseConnector
 from openmacrostate.connectors.frbny_sofr import FrbnySofrConnector
 from openmacrostate.connectors.treasury_debt_to_penny import TreasuryDebtToPennyConnector
 
 _BUILTINS = {
+    "fed-h41-release": FedH41ReleaseConnector,
     "frbny-sofr": FrbnySofrConnector,
     "treasury-debt-to-penny": TreasuryDebtToPennyConnector,
 }

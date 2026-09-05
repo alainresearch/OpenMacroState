@@ -2,6 +2,7 @@
 
 # Checksums must be stable across operating systems.
 *.cff text eol=lf
+*.html text eol=lf
 *.json text eol=lf
 *.jsonl text eol=lf
 *.md text eol=lf

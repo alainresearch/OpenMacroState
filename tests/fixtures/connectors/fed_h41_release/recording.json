@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "recording_kind": "test_only_excerpt",
+  "request": {
+    "method": "GET",
+    "url": "https://www.federalreserve.gov/releases/h41/20230316/h41.htm",
+    "accept": "text/html"
+  },
+  "response": {
+    "status_code": 200,
+    "final_url": "https://www.federalreserve.gov/releases/h41/20230316/h41.htm",
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "date": "Sun, 09 Aug 2026 17:21:00 GMT"
+    },
+    "retrieved_at": "2026-08-09T17:21:00Z",
+    "body_file": "response.html",
+    "byte_length": 3705,
+    "sha256": "f612aad734ce96fe222d3178ff2b085ad605c95b60d78b86c5f0e8fabc9bc585"
+  }
+}
