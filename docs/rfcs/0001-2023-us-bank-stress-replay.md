@@ -1,369 +1,353 @@
-# RFC 0001: Evidence-reviewed 2023 US banking-stress replay
+# RFC 0001: Unscored H.4.1 primary-credit evidence canary
 
-- Status: Draft
+- Status: Draft — awaiting independent review
 - Authors: @alainresearch (with disclosed AI assistance)
-- Shepherd: Unassigned
+- Shepherd: @alainresearch (bootstrap project lead; not an independent reviewer)
 - Created: 2026-08-10
+- Revised: 2026-09-05
 - Discussion: [GitHub Issue #11](https://github.com/alainresearch/OpenMacroState/issues/11)
+- Review window: Not started; start and earliest decision timestamps unrecorded
 - Supersedes:
 - Superseded by:
 
 ## Summary
 
-Build the first real OpenMacroState historical replay around a narrow question
-that can be scored from fixed, dated Federal Reserve releases:
+Build a small, unscored evidence canary around two dated Federal Reserve H.4.1
+HTML releases. The question is mechanical:
 
-> At 2023-03-10 23:59:59 in New York, using only official information that was
-> public by then, what probability should a researcher assign to Wednesday
-> primary-credit loans outstanding in the next H.4.1 release reaching at least
-> ten times its fixed baseline?
+> Does the Primary credit Wednesday stock in the March 16, 2023 release reach
+> at least ten times the same stock in the March 9, 2023 release?
 
-The research cutoff is `2023-03-11T04:59:59Z`. The baseline is the Primary
-credit row, Wednesday column, in the 2023-03-09 H.4.1 release: USD 4,581 million.
-The binary threshold is USD 45,810 million. It is predeclared in this replay
-contract before reveal bytes are admitted, but the target was designed in 2026
-with knowledge of 2023 history. The outcome comes from the same row and column
-in the 2023-03-16 H.4.1 release.
+The research cutoff is `2023-03-11T04:59:59Z`, or March 10 at 23:59:59 in New
+York. The baseline cell is Table 1, Primary credit, Wednesday March 8, in the
+March 9 release. Its expected reported value is USD 4,581 million. The fixed
+multiplier is 10; the resolver must extract the baseline and compute the
+threshold, rather than accept an asserted result. The outcome cell is Table 1,
+Primary credit, Wednesday March 15, in the March 16 release.
 
-This RFC specifies the question, evidence inventory, competing mechanisms,
-prediction rules, reveal boundary, and release gates. It does **not** yet admit
-the late-downloaded official files as authenticated historical evidence. The
-executable case may graduate only after a reviewed proof path binds each exact
-research artifact to pre-cutoff public availability.
+This is a present-day reconstruction designed with knowledge of history. It
+contains no prediction probabilities, Brier scores, log scores, auxiliary
+events, or model performance claims. The exercise tests evidence admission,
+exact extraction, arithmetic, and research/reveal separation. It does not yet
+fulfil the roadmap's complete real historical macro-judgment milestone.
+
+This revision is a design proposal only. It admits no source bytes, changes no
+runtime or schema, and implements no canary. Source evidence remains
+`historical_evidence: false` until a reviewed proof contract and its separately
+reviewed implementation support the exact historical availability claim.
 
 ## Problem and users
 
-The repository's `2023-banks` example is deliberately synthetic. It proves that
-the software can quarantine future observations and keep outcomes separate, but
-it cannot demonstrate that a real macro judgment can be reconstructed without
-hindsight.
+The existing `cases/2023-banks` and `reveals/2023-banks` directories contain a
+synthetic fixture. They demonstrate software behavior but cannot authenticate a
+real 2023 information set. Keep them unchanged.
 
-A useful first historical case must expose three common errors:
+A two-release canary gives source, software, and macro reviewers a tractable
+way to examine three independent questions:
 
-- disguising a retrospectively designed target as a contemporaneous forecast;
-- replacing original releases with current or revised data; and
-- treating a file downloaded today as proof that the same bytes were public at
-  the historical cutoff.
+1. Which exact bytes were available by the relevant historical gate?
+2. Which table cells and operations produced the result?
+3. Can research inputs remain isolated from later evidence and its metadata?
 
-The proposed target begins after Silicon Valley Bank had already been closed.
-It asks whether stress would become large enough to appear in a system-level
-Federal Reserve liquidity measure. This is useful to macro researchers,
-provenance reviewers, model authors, and maintainers because it has a fixed
-information boundary, a fixed numerical threshold, and a dated official reveal.
+A successful replay demonstrates only those bounded properties. A primary-credit
+stock is neither a lending flow nor a count of borrowing banks. Its change does
+not establish solvency, the distribution of stress, the use of all emergency
+facilities, or a causal mechanism. Broader economic claims and competing
+mechanisms belong to a later case design with its own evidence and review.
 
 ## Research-integrity effects
 
-### Information and accounting boundary
+### Time and retrospective construction
 
-- Research cutoff: `2023-03-11T04:59:59Z`, equal to 2023-03-10 23:59:59 EST.
-- Unit: USD millions, exactly as reported in H.4.1.
-- Baseline cell: H.4.1 dated 2023-03-09, Table 1, Primary credit,
-  Wednesday 2023-03-08.
-- Outcome cell: H.4.1 dated 2023-03-16, Table 1, Primary credit,
-  Wednesday 2023-03-15.
-- Binary event: outcome cell greater than or equal to ten times the baseline.
-- Weekly averages, current-series downloads, later revisions, and differently
-  named Federal Reserve facilities cannot substitute for either cell.
+The design keeps four different concepts visible:
 
-The target cell is a Wednesday stock of primary-credit loans outstanding. It is
-not a lending flow, a count of borrowing banks, or a measure of every emergency
-liquidity channel. A large increase does not establish that stress was evenly
-distributed across banks, that every borrower was insolvent, or that one
-proposed mechanism caused the change.
+- the Wednesday observation date represented by a reported stock;
+- independently supported availability of the exact source version;
+- the current system's actual retrieval and construction times; and
+- the historical research cutoff or reveal gate being tested.
 
-### Historical status
+The current construction time must never be backdated. `made_at` belongs to the
+prediction contract and is not a place to store this unscored reconstruction.
+No dummy prediction, invented historical probability, or adjusted timestamp may
+be used to make the current runtime admit the case.
 
-The proposed case begins with:
+The implementation proposal must define how actual construction/retrieval
+metadata and historical eligibility coexist without conflating them. The field
+names used in this RFC describe requirements, not additions to `schemas/v1`.
+A dated URL, source authority, present-day checksum, page release date, scheduled
+publication hour, or self-reported recording timestamp is insufficient to prove
+when the exact bytes were public.
 
-```yaml
-historical_evidence: false
-target_availability_mode: retrospective_authenticated
-model_evaluation_status: retrospective_contaminated_model
-target_design_status: retrospective_target_design
-```
+Until the proof contract, rights decisions, implementation, and case evidence
+pass their respective review gates, the candidate remains unauthenticated and
+ineligible as evidence at the 2023 cutoff. A local parser demonstration may run
+under honest present-day metadata, but must not be presented as an admitted
+historical replay.
 
-The target mode describes the assurance the finished case must eventually
-provide, not an assurance the current runtime already provides. A present-day
-SHA-256 digest proves only that bytes have not changed since the present
-capture. It does not prove those bytes existed or were public in March 2023.
+### Fixed economic and extraction boundary
 
-All three targets were designed after their historical outcomes occurred. They
-are predeclared only relative to this case's future reveal step, not relative to
-March 2023. Because present-day general-purpose models can already know those
-outcomes, their probabilities in this replay are demonstrations of the research
-protocol, not out-of-sample forecasting performance. Genuine predictive
-evaluation requires a probability frozen before the cutoff, a model and training
-corpus frozen before the cutoff, or an independently frozen deterministic
-prediction rule.
+| Role | Dated release | Exact source locator | Observation date | Unit |
+| --- | --- | --- | --- | --- |
+| Research baseline | 2023-03-09 | Table 1 / Primary credit / Wednesday | 2023-03-08 | `USD_million` |
+| Reveal outcome | 2023-03-16 | Table 1 / Primary credit / Wednesday | 2023-03-15 | `USD_million` |
 
-### Evidence selection
-
-An item may enter the research bundle only if it was selected under a rule that
-could have been applied before the outcome:
-
-1. it is an official regulator, central-bank, or fixed SEC filing source;
-2. it was public by the cutoff under a reviewed availability rationale;
-3. its exact version and relevant table, filing component, or order are fixed;
-4. it bears directly on funding, duration exposure, deposit behavior, industry
-   resilience, or the known closure; and
-5. it is not selected merely because the institution later failed.
-
-For that reason, a Signature Bank 10-K is excluded from the first research
-bundle. Selecting it only because Signature failed after the cutoff would add
-post-outcome entity-selection bias.
+Only these two reported stocks participate in the comparison. The resolver must
+bind labels to the release's actual Wednesday column and verify the observation
+date, table heading, unit, source URL, and release date. A weekly average, a
+neighboring row, another facility, a current series, or a later revision cannot
+substitute for either cell. Other cells present in the preserved HTML do not
+become additional economic targets.
 
 ## Detailed design
 
-### Predictions
+### Source inventory and control-plane boundary
 
-The primary and two auxiliary predictions are separate. Each records its own
-probability, Brier score, and binary log loss; no post-hoc composite score is
-permitted.
+The two intended original-source URLs are:
 
-```yaml
-case_id: 2023-us-bank-stress-official-v1
-information_cutoff: 2023-03-11T04:59:59Z
-cutoff_timezone: America/New_York
+- Research: [H.4.1 HTML, March 9, 2023](https://www.federalreserve.gov/releases/h41/20230309/h41.htm).
+- Reveal: [H.4.1 HTML, March 16, 2023](https://www.federalreserve.gov/releases/h41/20230316/h41.htm).
 
-primary_prediction:
-  id: primary_credit_10x
-  baseline_usd_millions: 4581
-  threshold_usd_millions: 45810
-  resolved_by: h41_2023_03_16_primary_credit_wednesday
-  rule: value >= 45810
+This RFC is a public design/control document. It is not part of the research
+archive or an input to an analysis process. Its knowledge of a future release
+and its locator must not leak into historical research inputs. The frozen
+comparison rule and planned target observation date may be declared before
+resolution; realized future evidence and its metadata may not.
 
-secondary_predictions:
-  - id: additional_idi_closure_7d
-    deadline_exclusive: 2023-03-18T04:00:00Z
-  - id: new_broad_fed_facility_7d
-    deadline_exclusive: 2023-03-18T04:00:00Z
+HTML matches the current H.4.1 connector's source format. PDF, current time
+series, additional institutions, SOFR, Treasury data, closure events, and policy
+announcements are outside this phase. The current connector captures/replays
+HTML conservatively and does not authenticate old vintages; merely using that
+connector does not satisfy the historical proof requirement.
 
-reveal_not_before: 2023-03-18T04:00:00Z
-scores:
-  - brier
-  - binary_log_loss
-aggregation: none
-```
+### Exact-version proof contract
 
-The auxiliary window is the half-open interval after the cutoff and before
-2023-03-18 00:00:00 EDT. It represents seven New York calendar days, not 168
-elapsed UTC hours: the 2023-03-12 daylight-saving transition makes it 167 hours.
-The reveal gate opens at the exclusive endpoint, so no event instant is
-simultaneously eligible as both hidden outcome and revealed evidence.
+For each candidate artifact, a source-specific proof record must bind:
 
-`additional_idi_closure_7d` resolves true when, within that interval, a US state
-or federal banking authority formally closes at least one FDIC-insured
-depository institution other than SVB. A voluntary liquidation does not count,
-and creation of a bridge bank does not count as a second closure.
+1. The original HTTPS source URL and its requested release date.
+2. The independent archive or timestamp authority, its capture timestamp, and
+   the basis for trusting that authority's timestamp and source attribution.
+3. A stable archive record identity, such as CDX index identity and WARC record
+   location/identifier when available, plus the corresponding retrieval recipe.
+4. The original response payload's exact digest and byte length. Specify the
+   digest algorithm, decoding boundary, and how an archive wrapper, rewritten
+   links, compression, or transformed replay response is distinguished from
+   the original payload. A digest of an archive viewer page is insufficient.
+5. The proof material needed to reproduce the binding, each item's own digest,
+   the actual present-day retrieval time, and the verifier identity/version.
+6. The historical gate being claimed and the verification result, including
+   missing evidence, uncertainty, conflicts, or later corrections.
 
-`new_broad_fed_facility_7d` resolves true when the Federal Reserve formally
-announces, in the same half-open window, a previously nonexistent lending or liquidity
-program offered to a class of depository institutions rather than one named
-institution. A change to existing discount-window terms alone does not count.
+For research, the verified capture must establish public availability of the
+exact baseline payload no later than `2023-03-11T04:59:59Z`. For reveal, the
+payload must satisfy the separately declared evaluation availability boundary.
+This first design retains `reveal_not_before: 2023-03-18T04:00:00Z`; it is a
+fixed reveal gate, not an auxiliary-event window or a publication timestamp.
+Evaluation at that gate requires proof that the exact reveal version was
+available by then. If no acceptable proof exists, the canary fails admission;
+the implementation must not silently widen the gate or substitute today's page.
 
-### Research source ledger
+An archive timestamp is evidence from a named authority, not a cryptographic
+proof of every assertion the source makes. Review must decide whether the
+specific authority, payload binding, completeness, and offline verification
+material are sufficient. A CDX entry alone does not authenticate arbitrary
+locally supplied bytes. Archive unavailability, digest mismatch, ambiguous
+payload identity, missing proof, or unsupported trust must fail closed.
 
-The research archive and its hash tree are physically independent from the
-reveal archive. Exact artifact digests, extraction locators, licensing decisions,
-and historical-availability proofs belong in the source ledger created during
-implementation.
+This RFC does not choose an already accepted proof authority or assert that
+suitable archive records have been obtained. The proof format, trust assumptions,
+and any necessary public-schema or security-boundary changes need explicit
+review before admission.
 
-| Source fixed before cutoff | Intended use | Version and availability risk |
-| --- | --- | --- |
-| [Federal Reserve 2023-02-01 FOMC statement](https://www.federalreserve.gov/newsevents/pressreleases/monetary20230201a.htm) and [implementation note](https://www.federalreserve.gov/newsevents/pressreleases/monetary20230201a1.htm) | Policy-rate and primary-credit-rate setting | Current web bytes require a historical proof or dated official archive rationale. |
-| [SVB Financial 2022 10-K index](https://www.sec.gov/Archives/edgar/data/719739/000071973923000021/0000719739-23-000021-index.htm) and [filing](https://www.sec.gov/Archives/edgar/data/719739/000071973923000021/sivb-20221231.htm) | Deposits, AFS/HTM values, rate risk, and funding disclosures | Fix accession `0000719739-23-000021`, component paths, acceptance metadata, and exact bytes. Treat issuer statements as reported evidence. |
-| [FDIC Q4 2022 release](https://www.fdic.gov/news/press-releases/2023/pr23013.html) and [chairman's statement](https://www.fdic.gov/news/speeches/2023/spfeb2823.html) | Industry unrealized losses, deposit decline, capital, liquidity, and competing evidence of resilience | Preserve the 2023-02-28 vintage; later Call Report revisions cannot replace it. |
-| [Silvergate 2023-03-08 8-K index](https://www.sec.gov/Archives/edgar/data/1312109/0001312109-23-000058-index.html) and [company exhibit](https://www.sec.gov/Archives/edgar/data/1312109/000131210923000058/ex991sipressrelease3x8x23.htm) | A known voluntary liquidation before cutoff | Fix accession `0001312109-23-000058`; do not classify voluntary liquidation as a regulatory closure. |
-| [SVB 2023-03-08 8-K](https://www.sec.gov/Archives/edgar/data/719739/000119312523064680/d430920d8k.htm) and [investor letter](https://www.sec.gov/Archives/edgar/data/719739/000119312523064680/d430920dex993.htm) | Securities sale, loss, planned financing, and deposit trajectory | Fix accession `0001193125-23-064680`; issuer assertions remain reported evidence. |
-| [Federal Reserve H.4.1 dated 2023-03-09](https://www.federalreserve.gov/releases/h41/20230309/h41.pdf) and [release directory](https://www.federalreserve.gov/releases/h41/20230309/) | Fixed primary-credit baseline | Bind the dated PDF, table, row, Wednesday column, and USD-millions unit. |
-| [Federal Reserve H.8 dated 2023-03-10](https://www.federalreserve.gov/releases/h8/20230310/h8.pdf) | Latest available aggregate commercial-bank balance-sheet context | Use only that vintage and only observations available within it; do not substitute a current series. |
-| [California DFPI signed SVB order](https://dfpi.ca.gov/wp-content/uploads/sites/337/2023/03/DFPI-Orders-Silicon-Valley-Bank-03102023.pdf) and [official action page](https://dfpi.ca.gov/enforcement_action/silicon-valley-bank/) | Establish the known closure and regulator's stated grounds before cutoff | California material is not covered by the federal-government-work rule; use `fetch_only` or `reference_only` until rights and historical availability are reviewed. |
+### Rights and offline reproduction
 
-Date-only sources are conservatively mapped to the end of the source's local
-calendar day. EDGAR acceptance time is not silently promoted to a guaranteed
-public-availability instant. Fixed accession numbers and dated URLs reduce
-ambiguity but do not replace a reviewed proof for the exact bytes.
+Each source payload and each retained archive/proof artifact needs an individual
+rights decision, attribution, permitted-use scope, and redistribution status.
+Repository Apache-2.0 licensing does not relicense source or archive material.
 
-### Reveal source ledger
+The [Board disclaimer](https://www.federalreserve.gov/disclaimer.htm) is a
+starting source for review, not blanket permission for every byte in a full
+HTML response. Site chrome, scripts, logos, trademarks, and third-party material
+require attention. Archive access also does not itself confer redistribution
+rights. Do not infer permission for a complete response from an approved table
+excerpt.
 
-The reveal bundle has its own directory, license record, checksum manifest, and
-`not_before` gate. No reveal file, summary, result field, URL, content digest, or
-outcome value may appear in the research archive. A reveal file downloaded after
-its claimed resolution time also needs a reviewed proof binding the exact
-version to public availability no later than evaluation; a dated URL alone is
-not sufficient.
+Offline verification requires local checksummed source bytes and all proof
+material needed by the accepted verifier. A reference-only URL cannot satisfy
+that requirement. If bytes cannot be bundled publicly, specify a lawful local
+acquisition procedure, preserve the exact identified version, and demonstrate
+that subsequent verification works offline. The public release must state what
+is omitted and whether a fresh reviewer can actually acquire it.
 
-| Reveal source | Resolution use |
-| --- | --- |
-| [Joint Federal Reserve release dated 2023-03-12](https://www.federalreserve.gov/newsevents/pressreleases/monetary20230312b.htm) | Depositor-protection and systemic-risk actions; context only unless tied to an auxiliary rule. |
-| [Federal Reserve BTFP announcement dated 2023-03-12](https://www.federalreserve.gov/newsevents/pressreleases/monetary20230312a.htm) | Resolve the new-broad-facility auxiliary event. |
-| [New York DFS Signature action](https://www.dfs.ny.gov/reports_and_publications/press_releases/pr20230312) and [FDIC bridge-bank release](https://www.fdic.gov/news/press-releases/2023/pr23018.html) | Resolve the additional-closure auxiliary event without double counting the bridge bank. |
-| [Federal Reserve H.4.1 dated 2023-03-16](https://www.federalreserve.gov/releases/h41/20230316/h41.pdf) and [release directory](https://www.federalreserve.gov/releases/h41/20230316/) | Resolve the primary event from the predeclared row, column, and unit. |
+A sanitized excerpt has a different digest and cannot silently replace the
+original payload bound by an archive proof. If an extraction derivative is used,
+its deterministic derivation, original-payload binding, and rights must be
+reviewed. If neither a lawful reproducible acquisition route nor a reviewed
+derivative route is available, the case remains blocked.
 
-Later Federal Reserve, FDIC, or state post-mortems may be analyzed only after
-scoring. They cannot enter the research snapshot or determine the primary event.
+### Research and reveal separation
 
-### Competing mechanisms
+Use a new research/reveal pair with separate directories, manifests, checksum
+roots, and source/proof ledgers. Do not place both bundles beneath an
+analysis-readable archive or shared recursively hashed manifest.
 
-The claim ledger must preserve at least these alternatives without voting them
-into a single story:
+The research side contains only the admitted baseline evidence, its eligible
+provenance, and the frozen comparison specification. It must contain no reveal
+payload, outcome value, result, reveal source URL, content digest, archive
+identifier, later report, or summary derived from them. A checksum or filename
+can leak future information just as prose can.
 
-1. **Institution-specific concentration and governance.** SVB's depositor base,
-   asset structure, and decisions produce a large local failure but limited
-   aggregate primary-credit loans outstanding.
-2. **Common duration risk plus uninsured-deposit runs.** Shared unrealized losses
-   and runnable funding produce a system-level liquidity response, additional
-   closures, or a broad facility.
-3. **Credit-loss deterioration.** Asset-credit impairment, rather than liquidity
-   and valuation pressure, drives the event. Pre-cutoff industry asset-quality
-   evidence must be retained as a genuine competing observation.
-4. **Monetary tightening and liability repricing.** Higher rates affect both
-   securities valuations and deposit funding costs.
-5. **Information contagion and common-client channels.** Closely timed failures
-   coordinate depositor behavior beyond institutions with identical books.
-6. **Policy containment and collateral transformation.** Stress can be severe
-   while liquidity tools prevent a larger number of closures.
-7. **Idiosyncratic failure within a resilient system.** Aggregate capital and
-   liquidity evidence supports a limited-spillover interpretation.
+A distinct reveal-building role creates the reveal manifest only after the
+research manifest and rule are frozen. Roles and actual execution times must be
+recorded honestly; this sequencing does not erase the author's prior historical
+knowledge or turn the construction into a forecast. Lack of an independent
+human reviewer cannot be remedied by relabeling an AI run as that reviewer.
 
-The official aggregates do not identify each mechanism's causal share. The
-case must not publish percentage causal decompositions that the design cannot
-support.
+The evaluation controller keeps reveal locators, proof material, and the reveal
+gate outside analysis inputs. Before the gate, evaluation must reject without
+reading or hashing reveal payloads or their metadata. At or after the gate, it
+may open the separate reveal bundle only under the accepted proof and rights
+contract. The resulting comparison report belongs to the evaluation side, never
+back in the frozen research archive.
+
+### Deterministic threshold resolver
+
+The proposed rule is `primary-credit-10x-v1`:
+
+1. Verify the two admitted payloads and their exact source/version identities.
+2. Extract the two fixed Table 1 / Primary credit / Wednesday cells, checking
+   the dates and `USD_million` units stated above.
+3. Require the baseline to equal the fixed expected 4,581 `USD_million`; reject
+   a changed value or cell identity instead of silently redefining the target.
+4. Compute `threshold = 10 * baseline` using exact integer arithmetic, then
+   `threshold_met = outcome >= threshold`. Equality meets the threshold.
+5. Emit an evaluation report binding the inputs, extraction/parser identity,
+   rule version, multiplier, units, computed threshold, comparison result,
+   historical proof status, and frozen research/reveal manifest identities.
+
+The expected threshold is 45,810 `USD_million`, but the implementation must
+recompute it. This document deliberately provides no asserted outcome value or
+precomputed comparison result for the resolver to copy. Missing, malformed,
+negative, non-finite, mismatched, or unverified inputs must not become zero,
+carried-forward values, or assumed results.
+
+The implementation proposal must specify the unscored report contract and its
+compatibility boundary. It must not manufacture a prediction record or invoke
+forecast scoring to carry this Boolean comparison. Any public contract or
+security-boundary change requires its own applicable RFC/review gate; this
+proposal does not authorize a case-specific bypass of existing validation.
+
+## Alternatives and scope decisions
+
+The wider banking-stress case is deferred. More institutions, auxiliary events,
+causal hypotheses, and probabilities multiply source and interpretation burdens
+before the two-release evidence path works. This canary is an intermediate
+step; a broader case can follow with reviewed scope and evidence.
+
+Current downloaded pages and synthetic excerpts are useful for parser tests,
+but cannot stand in for authenticated historical payloads. Current series, dated
+PDFs, or another source format require separate source/extraction contracts and
+are not silent fallback routes.
+
+A stable graph, cross-source state engine, or model adapter is unnecessary for
+this comparison. Existing experimental tooling may inform implementation, but
+neither its existence nor its test results accept a new proof contract.
 
 ## Compatibility and migration
 
-The first merge of this RFC is documentation only. It does not change schemas,
-the synthetic fixture, or runtime acceptance rules.
+This PR changes documentation only. It does not modify `schemas/v1`, connectors,
+case data, reveal data, the synthetic fixture, or runtime acceptance rules.
+Implementation and evidence admission remain separate reviewable changes.
 
-Implementation should add a new case and reveal pair rather than mutate
-`cases/2023-banks`. If a real historical-availability verifier requires public
-schema or proof changes, that change must be separately reviewed and versioned.
-The case must fail closed under the existing runtime until the proof contract is
-implemented; maintainers must not add a case-specific boolean bypass.
-
-## Security, privacy, and licensing
-
-- Apache-2.0 covers repository-authored code and prose, not the source files.
-- Federal Reserve material is reviewed item by item under the Board's
-  [disclaimer](https://www.federalreserve.gov/disclaimer.htm); each use credits
-  the Board as source, and third-party images, logos, and trademarks are excluded.
-- SEC accession metadata and issuer filings retain source attribution. Company
-  exhibits are company-reported material, not statements by the SEC and not US
-  government works merely because EDGAR hosts them. Each issuer-authored item
-  receives its own `bundled`, `fetch_only`, `reference_only`, or `blocked`
-  decision; it defaults to `fetch_only` or `reference_only` until rights review.
-- FDIC items receive separate source and redistribution decisions under the
-  [FDIC website policies](https://www.fdic.gov/about/website-policies).
-- California DFPI and New York DFS material is not automatically a US federal
-  government work. It remains `fetch_only` or `reference_only` until reviewed.
-- No FRED or ALFRED material is used.
-- The bundle excludes personal data, depositor identities, unnecessary images,
-  logos, and unrelated filing attachments.
-
-## Alternatives
-
-### Predict whether SVB would fail
-
-Rejected for the first case. By a clean end-of-day March 10 cutoff, SVB had
-already been closed. Moving the cutoff earlier would make the exact public
-information boundary harder to authenticate and would encourage post-hoc target
-selection.
-
-### Predict whether a broad policy backstop would be announced
-
-Retained as an auxiliary outcome, not the primary outcome. The definition of a
-"backstop" is more contestable than a fixed H.4.1 cell.
-
-### Use a current time series or FRED/ALFRED vintage
-
-Rejected. A current series can incorporate revisions, and current FRED/ALFRED
-terms conflict with this project's software-driven archival workflow.
-
-### Ship the present-day downloads as a historical case immediately
-
-Rejected. Source authority and a dated URL do not authenticate the historical
-availability of today's exact bytes.
-
-## Drawbacks and risks
-
-- Historical availability may remain unverified for some otherwise authoritative
-  files, delaying an executable case.
-- The 10x threshold is intentionally coarse and measures only one aggregate
-  liquidity response.
-- A threshold chosen after knowing 2023 history can still exhibit target-design
-  hindsight. The RFC freezes it now and reports that limitation; it cannot turn
-  the exercise into a contemporaneous forecast.
-- Official sources can be revised, moved, or silently updated.
-- Aggregate data cannot distinguish solvency, liquidity, institution mix, or
-  causal contribution without additional assumptions.
+The design must be evaluated against current main before implementation; the
+Draft branch's age must not freeze obsolete connector or runtime assumptions.
+Existing experimental outputs are not a compatibility promise for a new proof
+or unscored report format.
 
 ## Test and evaluation plan
 
-The implementation cannot graduate until all of the following pass:
+An implementation and candidate evidence set cannot graduate until:
 
-1. A source reviewer and a separate macro reviewer approve every locator,
-   extraction, unit, timestamp rationale, and redistribution decision.
-2. Every accepted research artifact has an exact digest and an approved
-   pre-cutoff availability proof bound to source identity and version. Every
-   reveal artifact has the equivalent proof for public availability no later
-   than its declared resolution or evaluation time.
-3. The research manifest is frozen before a separate role builds the reveal
-   manifest.
-4. A clean-environment replay reproduces the same eligible observation and claim
-   roots without network access.
-5. Automated leakage scanning confirms that the research archive contains no
-   reveal path, URL, digest, outcome value, post-cutoff report, or derived result.
-6. Replacing the original FDIC Q4 vintage with a later revision fails.
-7. Replacing the H.4.1 Wednesday cell with the weekly-average cell fails.
-8. Moving a date-only source to the beginning rather than the end of its local
-   day fails.
-9. Changing a source digest, accession component, table locator, unit, cutoff,
-   threshold, prediction probability, or scoring rule changes the snapshot root
-   or fails validation.
-10. Evaluation before `reveal_not_before` fails without reading or hashing reveal
-    plaintext; evaluation exactly at the exclusive event-window endpoint may
-    open only a reveal bundle whose versions pass their own availability proofs.
+1. A source/provenance reviewer and a separate macro reviewer check each source
+   identity, locator, Wednesday date, unit, extraction, timestamp rationale, and
+   the limited economic interpretation. Rights decisions receive qualified
+   review, with actual reviewers and conflicts recorded.
+2. Both exact payloads pass the accepted availability verifier for their gates.
+   Fabricated archive metadata, a transformed viewer response, wrong original
+   URL, missing proof, conflicting versions, or an altered digest fail closed.
+3. Research and reveal manifests are physically separate and frozen in the
+   declared role/order sequence. Leakage scans reject future values, result
+   fields, URLs, paths, digests, archive identifiers, and summaries on the
+   research side.
+4. Offline reproduction from a clean supported environment verifies the same
+   local bytes, accepted evidence set, extraction locators, semantic report,
+   and deterministic hashes without network access. Actual retrieval/build
+   metadata stays truthful and is separated from deterministic semantic hashes.
+5. Substituting a weekly average, neighboring row, wrong observation date,
+   release, unit, later revision, or current download fails. Dropping or
+   replacing a proof item must not preserve historical eligibility.
+6. The resolver calculates both the threshold and comparison from admitted
+   cells. Focused synthetic boundary tests cover below, equal to, and above
+   the threshold, and are clearly labeled software tests rather than source
+   evidence. A changed baseline, multiplier, rule, or input identity changes
+   the frozen commitment or fails validation.
+7. Evaluation before the gate fails without reading or hashing reveal material.
+   Evaluation at the gate succeeds only when the separate reveal proof and
+   rights requirements pass. No evaluation output mutates research inputs.
+8. No probability, forecast score, backdated `made_at`, automatic historical
+   admission, or causal claim is emitted. `historical_evidence: false` remains
+   visible wherever historical admission has not been approved.
 
-## Adoption and rollback
+No test pass alone establishes source truth, historical publication, or rights.
+Independent review must assess those claims within the recorded trust model.
 
-Adoption has three stages:
+## Adoption, review, and rollback
 
-1. open this Draft RFC for public evidence and macro review, assign a shepherd,
-   and complete the minimum 14-day comment period before any decision or merge;
-2. implement the source ledger and historical-proof verifier behind a separate
-   pull request only after the RFC decision, while keeping
-   `historical_evidence: false`; and
-3. add the case/reveal pair only after all release gates pass.
+The repository owner, @alainresearch, serves as shepherd in the existing
+bootstrap maintainer capacity. This names the person coordinating the proposal;
+it neither creates a new repository role nor supplies independent review.
 
-The `replay-cases` area has no registered Maintainer or Reviewer during project
-bootstrap. Under the [governance bootstrap exception](../../GOVERNANCE.md), the
-interim Project Lead must use the same public process, seek the strongest
-available independent macro, provenance, and licensing review, and may not waive
-those requirements.
-The formal comment clock begins only after the shepherd and start timestamp are
-recorded on the pull request; opening the Draft alone does not start that clock.
+The formal minimum 14-day public comment window has **not started**. Keep the
+RFC Draft while this narrowed scope and qualified independent review coverage
+are arranged. The shepherd must post the UTC start timestamp and earliest
+possible decision timestamp on the PR when review formally begins. Substantial
+scope or proof-contract changes require a renewed review window; elapsed Draft
+age does not count as acceptance.
 
-At any stage, a rights change, provenance failure, or newly discovered revision
-can demote an artifact to `fetch_only` or `reference_only`, quarantine it, and
-return the case to Draft without altering the synthetic fixture.
+Follow the [RFC process](README.md) and
+[governance bootstrap exception](../../GOVERNANCE.md). Seek the strongest
+available independent review and do not waive provenance, licensing, or security
+requirements because the relevant area lacks registered maintainers. AI-assisted
+editing or audit is disclosed work, not an independent human approval.
+
+Adoption proceeds through distinct decisions:
+
+1. Publicly review and decide this narrowed design.
+2. Separately review the proof/trust and unscored resolver implementation,
+   including any necessary public-contract changes.
+3. Separately review the concrete source/proof ledgers, rights, bundles, and
+   reproduction evidence before admitting a historical canary.
+4. Decide whether a broader real macro-judgment case is justified afterward.
+
+Acceptance of the design does not mean those later steps are staffed or passed.
+A provenance failure, rights change, or discovered revision quarantines the
+candidate or admitted artifact and its dependent result; it does not rewrite
+sealed evidence, recast a failed gate as success, or alter the synthetic fixture.
 
 ## Unresolved questions
 
-- Which proof authorities and proof formats are sufficient for dated Fed PDFs,
-  EDGAR components, and state-regulator documents?
-- Should the first real verifier be source-specific or expose a general public
-  archive/timestamp protocol?
-- Can the original 2023-02-28 FDIC Q4 package be redistributed, or should the
-  bundle contain only a locator, digest, and extraction recipe?
-- Who will serve as shepherd, macro reviewer, provenance reviewer, and license
-  reviewer without combining incompatible approval roles?
-- Should the two auxiliary predictions ship in v1 or remain a scored extension?
-- What deterministic baseline probability, declared before this replay's reveal
-  step but not represented as a March 2023 forecast, should accompany the
-  retrospective model demonstration?
+- Which independent reviewers will cover macro interpretation, provenance/time,
+  rights, and the implementation's security boundary?
+- Which archive authority and exact payload-binding method meet the required
+  assurance, and can a fresh reviewer obtain the same verification material?
+- Can both source payloads and their proof material be bundled, or is a lawful,
+  reproducible local-acquisition/derivative route needed?
+- What reviewed experimental report and proof representation support this
+  unscored canary without violating current schemas or time semantics?
+- Can the two exact versions be authenticated for the declared gates? If not,
+  the proposed historical canary remains unadmitted.
 
 ## Decision record
 
-Pending public review. Acceptance of this RFC will approve the case design, not
-assert that the source files have passed historical-availability authentication
-or that any retrospective model score is out of sample.
+Pending. This scope revision replaces the wider scored banking-stress design
+within the same Draft RFC. It does not accept the RFC, start its comment clock,
+implement the resolver, admit historical evidence, or certify a 2023 forecast.
