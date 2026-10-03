@@ -381,7 +381,7 @@ def test_recording_rejects_path_escape_and_ambiguous_headers(tmp_path: Path) -> 
     recording["response"]["body_file"] = "response.json"
     recording["response"]["headers"]["Content-Type"] = "text/plain"
     recording_path.write_text(json.dumps(recording), encoding="utf-8")
-    with pytest.raises(ContractError, match="duplicate case-insensitive"):
+    with pytest.raises(ContractError, match="non-audited"):
         RecordedHttpTransport(recording_path).fetch(
             FrbnySofrConnector().plan({"start": "2023-03-22", "end": "2023-03-22"})[0]
         )
