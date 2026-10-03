@@ -59,7 +59,40 @@ def main() -> None:
                 or inspected.get("historical_eligibility_established") is not False
             ):
                 raise SystemExit(f"unexpected installed inspector result: {inspected}")
-        print("PASS clean wheel: both CLI entry points, bundled example, three offline recordings")
+        run(
+            cli,
+            "connector",
+            "capture",
+            "fed-h41-release",
+            "--start",
+            "2023-03-16",
+            "--end",
+            "2023-03-16",
+            "--recording",
+            repository / "tests/fixtures/connectors/fed_h41_release/recording.json",
+            "--output",
+            "h41-capture",
+            "--brief-output",
+            "h41-brief",
+        )
+        run(
+            cli,
+            "brief",
+            "h41",
+            "h41-capture",
+            "--previous",
+            "h41-capture",
+            "--output",
+            "h41-comparison",
+        )
+        for directory in ("h41-brief", "h41-comparison"):
+            for filename in ("index.html", "observations.csv", "brief.md", "brief.json"):
+                if not (working / directory / filename).is_file():
+                    raise SystemExit(f"installed wheel did not produce {directory}/{filename}")
+        compared = json.loads((working / "h41-comparison/brief.json").read_text(encoding="utf-8"))
+        if compared["comparison"]["kind"] != "identical" or len(compared["rows"]) != 7:
+            raise SystemExit("installed wheel produced an unexpected H.4.1 comparison")
+        print("PASS clean wheel: CLI, example, recordings, H.4.1 brief and comparison")
 
 
 if __name__ == "__main__":

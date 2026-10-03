@@ -3,7 +3,7 @@
 This roadmap communicates direction, not a delivery promise. Scope and sequencing
 may change after public review. A version ships only when its release gates pass.
 
-Status markers describe the repository on 2026-08-10:
+Status markers describe the repository on 2026-10-03:
 
 - ✅ implemented and covered by the current pre-alpha contract;
 - 🚧 in active implementation or review;
@@ -27,6 +27,9 @@ Capability status:
 - ✅ a deterministic CLI for validating and replaying bundled cases;
 - ✅ physically separate research and post-resolution reveal bundles;
 - ✅ human-readable and machine-readable replay output;
+- ✅ an experimental H.4.1 brief with local HTML, CSV, Markdown, exact source
+  tracing, and read-only comparison of two captures; this supports present-day
+  research without claiming authenticated historical availability;
 - ✅ unit, integration, future-leakage, packaging, and offline replay tests;
 - ✅ contributor, governance, security, and data-license foundations;
 - ✅ the first official-source connector, `frbny-sofr`, with recorded/offline
@@ -78,7 +81,7 @@ Release gates:
 
 Current bridge from v0.1:
 
-- 🚧 a fixed experimental H.4.1 trace projects seven exact-replayed reported
+- ✅ a fixed experimental H.4.1 trace projects seven exact-replayed reported
   facts and six deterministic derived facts into a non-causal dependency DAG;
 - 🚧 RFC 0002 is in Draft review for node/value separation, lineage, revision,
   conflict, and F/I/P/S semantics; and
