@@ -126,7 +126,9 @@ A successful demo produces these nine audit outputs:
 - `rejected_claims.jsonl` — rejected claims and their evidence diagnostics;
 - `predictions.jsonl` — predictions eligible for post-reveal scoring;
 - `scores.json` — reveal-gated Brier scores and binary log loss; and
-- `report.md` — a human-readable summary carrying the synthetic-fixture warning.
+- `report.md` — a human-readable summary of the actual audit counts, quarantine
+  and claim/prediction rejection reasons, and scoring results, carrying the
+  synthetic-fixture warning for synthetic cases.
 
 The directory also contains `.openmacrostate-output.json`, an ownership marker
 used to recognize a generated directory. It is operational metadata, not a

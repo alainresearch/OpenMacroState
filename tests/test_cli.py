@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import shutil
 import socket
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -87,6 +89,80 @@ def test_demo_writes_auditable_outputs(tmp_path: Path) -> None:
 
     assert main(_demo_args(output)) == 2
     assert main(_demo_args(output, "--force")) == 0
+
+
+@pytest.mark.parametrize("audit_case", ["fixture", "all_accepted", "rejected_prediction_only"])
+def test_demo_report_describes_actual_audit(tmp_path: Path, audit_case: str) -> None:
+    case_dir = tmp_path / "case"
+    shutil.copytree(CASE, case_dir)
+    if audit_case != "fixture":
+        for filename, id_field, excluded_id in (
+            ("observations.jsonl", "observation_id", "obs_synth_post_cutoff_trap"),
+            ("claims.jsonl", "claim_id", "claim_synth_leaky_must_reject"),
+        ):
+            path = case_dir / "inputs" / filename
+            records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+            path.write_text(
+                "".join(
+                    json.dumps(record) + "\n"
+                    for record in records
+                    if record[id_field] != excluded_id
+                ),
+                encoding="utf-8",
+            )
+    if audit_case == "rejected_prediction_only":
+        path = case_dir / "inputs" / "predictions.jsonl"
+        prediction = json.loads(path.read_text(encoding="utf-8"))
+        prediction["made_at"] = "2023-03-10T00:00:00Z"
+        path.write_text(json.dumps(prediction) + "\n", encoding="utf-8")
+    case = json.loads((case_dir / "case.json").read_text(encoding="utf-8"))
+    manifest_path = case_dir / case["extensions"]["checksums_file"]
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for entry in manifest["files"]:
+        data = (case_dir / entry["path"]).read_bytes()
+        entry["bytes"] = len(data)
+        entry["sha256"] = sha256(data).hexdigest()
+    manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+
+    output = tmp_path / "demo"
+    args = _demo_args(output)
+    args[1] = str(case_dir)
+    assert main(args) == 0
+    report = (output / "report.md").read_text(encoding="utf-8")
+    snapshot = json.loads((output / "snapshot.json").read_text(encoding="utf-8"))
+    counts = snapshot["extensions"]["eligible_content"]["exclusion_counts"]
+    interpretation = report.split("## Interpretation\n", 1)[1]
+    assert "deliberately late observation" not in interpretation
+    assert "rejected transitively" not in interpretation
+    assert (
+        "Only accepted observations, claims, and predictions appear in the analysis snapshot."
+        in report
+    )
+    assert "### Rejected predictions\n\n" in report
+    if audit_case == "fixture":
+        assert counts == {"observations": 1, "claims": 1, "predictions": 0}
+        quarantine = json.loads((output / "quarantine.jsonl").read_text(encoding="utf-8"))
+        assert all(reason in report for reason in quarantine["quarantine"]["reasons"])
+        assert "claim_synth_leaky_must_reject` — ineligible_evidence_at_claim_cutoff" in report
+        assert (
+            "The excluded records and their validator reasons are listed above." in interpretation
+        )
+    elif audit_case == "all_accepted":
+        assert counts == {"observations": 0, "claims": 0, "predictions": 0}
+        assert "### Quarantined observations\n\n- None" in report
+        assert "### Rejected claims\n\n- None" in report
+        assert "### Rejected predictions\n\n- None" in report
+        assert (
+            "This run quarantined no observations and rejected no claims or predictions."
+            in interpretation
+        )
+    else:
+        assert counts == {"observations": 0, "claims": 0, "predictions": 1}
+        assert "pred_naive_synth_bank_stress` — prediction_made_after_information_cutoff" in report
+        assert "- No accepted predictions" in report
+        assert (
+            "The excluded records and their validator reasons are listed above." in interpretation
+        )
 
 
 def test_demo_rejects_arbitrary_non_empty_output(tmp_path: Path, capsys) -> None:
