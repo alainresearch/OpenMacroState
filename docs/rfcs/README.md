@@ -4,6 +4,13 @@ RFCs are durable design records for changes that affect the research contract,
 public schemas, compatibility, security boundaries, licensing policy, governance,
 or another project-wide and difficult-to-reverse decision.
 
+## Active RFCs
+
+- [RFC 0001: Unscored H.4.1 primary-credit evidence canary](0001-2023-us-bank-stress-replay.md)
+  — Draft; narrows the first evidence path to two dated HTML releases and an
+  unscored threshold resolver. Independent review is pending; the formal
+  comment window has not started and no historical evidence is admitted.
+
 ## Lifecycle
 
 1. Discuss an early idea in GitHub Discussions when useful.
