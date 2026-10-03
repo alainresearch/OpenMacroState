@@ -18,6 +18,7 @@ from openmacrostate.connectors import (
 )
 from openmacrostate.resources import bundled_example
 from openmacrostate.runtime.accounting import audit_accounting
+from openmacrostate.runtime.brief_export import export_h41_brief, validate_brief_output
 from openmacrostate.runtime.case import CaseEvaluation, evaluate_case, score_case
 from openmacrostate.runtime.connectors import run_connector
 from openmacrostate.runtime.http import LiveHttpTransport, RecordedHttpTransport
@@ -108,6 +109,20 @@ def _parser() -> argparse.ArgumentParser:
         "--online", action="store_true", help="explicitly permit one allowlisted HTTPS request"
     )
     capture.add_argument("--output", type=Path, required=True)
+    capture.add_argument(
+        "--brief-output",
+        type=Path,
+        help="also write a separate H.4.1 HTML/CSV research brief (fed-h41-release only)",
+    )
+
+    brief = subparsers.add_parser("brief", help="export a readable research brief without a reveal")
+    brief_commands = brief.add_subparsers(dest="brief_command", required=True)
+    h41 = brief_commands.add_parser("h41", help="inspect or compare verified H.4.1 capture bundles")
+    h41.add_argument("case_dir", type=Path)
+    h41.add_argument("--previous", type=Path, help="an earlier capture to compare with this one")
+    h41.add_argument(
+        "--output", type=Path, required=True, help="new directory for HTML, CSV and notes"
+    )
 
     audit = subparsers.add_parser(
         "audit", help="run deterministic, read-only experimental audits over eligible evidence"
@@ -367,6 +382,15 @@ def _write_demo(
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.command == "brief":
+            evaluation = evaluate_case(args.case_dir)
+            previous = evaluate_case(args.previous) if args.previous is not None else None
+            report = export_h41_brief(evaluation, previous=previous, output_directory=args.output)
+            status = "PASS" if report["passed"] else "FAIL"
+            print(f"{status} H.4.1 brief | {report['comparison']['label']}")
+            print(f"OPEN {(args.output / 'index.html').resolve()}")
+            print("EXPORTS observations.csv | brief.md | brief.json")
+            return 0 if report["passed"] else 2
         if args.command == "trace":
             evaluation = evaluate_case(args.case_dir)
             report = trace_accounting_state(
@@ -452,6 +476,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "connector capture requires exactly one of --recording or --online; "
                     "network access is never implicit"
                 )
+            if args.brief_output is not None:
+                if args.connector_id != "fed-h41-release":
+                    raise OpenMacroStateError(
+                        "--brief-output is supported only for fed-h41-release"
+                    )
+                brief_protected = [args.output]
+                if args.recording is not None:
+                    brief_protected.extend((args.recording, args.recording.parent))
+                validate_brief_output(args.brief_output, protected_paths=brief_protected)
             connector = get_builtin_connector(args.connector_id)
             if args.recording is not None:
                 transport = RecordedHttpTransport(args.recording)
@@ -472,6 +505,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"WROTE {capture.case_dir} | connector={args.connector_id} | "
                 f"mode={capture.capture_mode} | observations={len(capture.observation_ids)}"
             )
+            if args.brief_output is not None:
+                report = export_h41_brief(evaluation, output_directory=args.brief_output)
+                status = "PASS" if report["passed"] else "FAIL"
+                print(f"{status} H.4.1 brief | OPEN {(args.brief_output / 'index.html').resolve()}")
+                return 0 if report["passed"] else 2
             return 0
         if args.command == "example":
             example = bundled_example(args.name)

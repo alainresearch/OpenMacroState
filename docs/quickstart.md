@@ -1,167 +1,190 @@
 # Quickstart
 
-## Requirements
+Make an H.4.1 brief from the included recording, then open the result in your
+browser. The first example runs offline after installation.
 
-- Python 3.10 or newer
-- Git
-- an isolated virtual environment
+## Install the repository version
 
-## Install from source
+Use Python 3.10 or newer, Git, and an isolated virtual environment. The brief
+workflow is available in the repository's development version;
+[GitHub pre-release v0.1.0a6](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6)
+does not include it. OpenMacroState is not published to PyPI.
 
 ```bash
-git clone https://github.com/alainresearch/openmacrostate.git
-cd openmacrostate
+git clone https://github.com/alainresearch/OpenMacroState.git
+cd OpenMacroState
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e '.[dev]'
+python -m pip install .
 ```
 
-On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`.
+The command examples use a POSIX shell. In Windows PowerShell, the environment
+activation command is `.venv\Scripts\Activate.ps1`; use PowerShell continuation
+syntax if entering a multiline command.
 
-## Understand the two bundles
+Developer tools are optional for ordinary use. The [contributor setup](#contributor-setup)
+installs them separately.
 
-The demo uses two independent directory trees:
+## Make your first brief
 
-```text
-cases/2023-banks/    prediction-time research inputs and research checksums
-reveals/2023-banks/  post-resolution outcomes and separate reveal checksums
-```
-
-The research bundle contains artifacts, observations, claims, and predictions,
-but no outcome path. The reveal bundle has its own `reveal.json`, artifacts,
-outcomes, and checksum manifest. Keeping them physically separate makes the
-pre-reveal boundary testable and allows a real reveal to be distributed or
-access-controlled independently. The bundled pair is colocated only because it
-is an entirely synthetic software fixture; directory separation is not DRM.
-
-## Five research times and two availability modes
-
-An observation keeps five concepts distinct:
-
-1. `observed_at` — the economic period or instant the value describes;
-2. `released_at` — when the source made that observation version public;
-3. `vintage_at` — the timestamp of the particular version or revision carried;
-4. `ingested_at` — when OpenMacroState acquired or registered it; and
-5. `information_cutoff` — the latest information boundary for the research case.
-
-`observed_at` alone never proves availability. Both availability modes require
-`released_at` and `vintage_at` to be no later than the applicable boundary:
-
-- `prospective_capture` also requires `ingested_at` no later than that boundary;
-- `retrospective_authenticated` permits later ingestion only when the linked,
-  checksummed artifact record carries a proof bound to the same source, exact
-  content digest, and publication time no later than the boundary.
-
-The bundled synthetic case uses `retrospective_authenticated` to exercise a
-later backfill. That mode must not be described as prospective capture, and its
-invented proof is not evidence about the real 2023 banking system. The pre-alpha
-runtime recognizes only this explicit synthetic proof type; late-ingested real
-evidence fails closed until an archive or signature verifier is implemented.
-
-## Validate the bundled fixture
+Run from the repository checkout:
 
 ```bash
-openmacrostate validate cases/2023-banks
+mkdir -p build
+oms connector capture fed-h41-release \
+  --start 2023-03-16 --end 2023-03-16 \
+  --recording tests/fixtures/connectors/fed_h41_release/recording.json \
+  --output build/h41-capture \
+  --brief-output build/h41-brief
 ```
 
-For a machine-readable validation summary, add `--json`:
+Open `build/h41-brief/index.html` in your browser. It shows seven reported
+Wednesday stock values in `USD_million`, an accounting check, and the source
+record. Copy the table into a spreadsheet, or use the CSV and Markdown downloads.
+
+This recording is a **`test_only_excerpt`**: a small derived HTML fixture with
+seven reported H.4.1 values. Its date identifies the release being illustrated;
+it does not authenticate the exact version available in 2023. Its source and
+receipt-time claims remain unverified, and the brief displays that status.
+No AI key or network request is needed for this example.
+
+The two output directories serve different purposes:
+
+| Directory | Contents |
+| --- | --- |
+| `build/h41-capture` | Preserved artifact, observations, provenance, and capture case |
+| `build/h41-brief` | `index.html`, `observations.csv`, `brief.md`, and experimental `brief.json` |
+
+Choose new output paths when repeating the example. Brief output must be a new
+directory with an existing parent, outside the input capture directories; it
+has no `--force` option.
+
+## Rebuild a brief from a saved capture
+
+The saved capture can be reused without repeating acquisition:
 
 ```bash
-openmacrostate validate cases/2023-banks --json
+oms brief h41 build/h41-capture --output build/h41-brief-copy
 ```
 
-To persist the deeply frozen pre-reveal record and its content root, add
-`--snapshot` with a path outside the input bundle:
+This command works offline. It verifies and reads the capture, then writes the
+four report files in the new output directory. It does not modify the capture.
+The [brief guide](h41-brief.md) describes the checks and experimental format.
+
+## Try a comparison offline
+
+Replay the same fixture a second time, after the first capture above:
 
 ```bash
-openmacrostate validate cases/2023-banks --snapshot build/research-snapshot.json
+oms connector capture fed-h41-release \
+  --start 2023-03-16 --end 2023-03-16 \
+  --recording tests/fixtures/connectors/fed_h41_release/recording.json \
+  --output build/h41-capture-again
+oms brief h41 build/h41-capture-again \
+  --previous build/h41-capture --output build/h41-comparison
 ```
 
-This snapshot is the eligible plaintext view intended for analysis. It contains
-accepted records and an audit commitment, but no rejected observation, claim,
-artifact metadata, or future value. Quarantine and rejection files are separate
-validator diagnostics and must not be supplied to an AI or model during replay.
+Open `build/h41-comparison/index.html`. Because both inputs replay the same
+fixture, this demonstrates unchanged bytes and values, rather than a real
+period-to-period movement. Each replay records the core replay time; it does
+not create a new economic observation. Each delta is the
+current value minus the previous value.
 
-Validation verifies declared SHA-256 checksums, applies the information cutoff,
-and rejects claims or predictions whose evidence is missing or ineligible. It
-does not write an output directory. The command has no reveal argument: it does
-not locate, open, hash, or parse anything under `reveals/`, so validation still
-works when the reveal bundle is absent.
+For research use, supply a separately saved earlier capture as `--previous`.
+The brief distinguishes a new observation period from changed values or changed
+source bytes for the same period. It does not label these differences an
+authenticated official revision. A missing or invalid capture causes an error;
+it does not produce a zero-change report. See [comparison rules](h41-brief.md#comparison-rules).
 
-If OpenMacroState was installed from a wheel rather than a repository checkout,
-run the packaged synthetic fixture with:
+## Explicit online capture
+
+For a real official response, select `--online` instead of `--recording`.
+This example retrieves a known dated release today:
 
 ```bash
-openmacrostate example 2023-banks --output build/example
+oms connector capture fed-h41-release \
+  --start 2023-03-16 --end 2023-03-16 --online \
+  --output build/h41-live-capture \
+  --brief-output build/h41-live-brief
 ```
 
-The `example` command resolves the separately packaged research and reveal trees
-and uses the fixture's fixed historical evaluation time. It remains synthetic.
+This is an intentional HTTPS request to the Federal Reserve Board. The output
+records the bytes retrieved now; it is not proof of what was available in 2023.
+For a different release, consult the [official release index](https://www.federalreserve.gov/releases/h41/default.htm)
+and set both dates to that release date. The connector does not select the
+latest release automatically. Source rights remain governed by the
+[H.4.1 source contract](fed-h41-source-contract.md).
 
-## Run the offline demo
+## Synthetic research demo
+
+The separate `2023-banks` teaching fixture exercises research cutoffs and
+post-resolution scoring. Every value, claim, prediction, and outcome is invented.
+It needs no network connection, data-provider account, or AI key.
 
 ```bash
-openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
+oms validate cases/2023-banks
+oms demo cases/2023-banks --reveal reveals/2023-banks \
+  --evaluation-at 2023-03-13T22:00:00Z --output build/demo
 ```
 
-`--evaluation-at` is an explicit post-resolution evaluation time. It cannot be
-in the future, must be at or after `reveal.not_before`, and must be no earlier
-than any outcome record's `resolved_at`. The outcome's same-source artifact must
-also have been published by that time. Before the gate passes, outcome bytes are
-not opened.
+`cases/2023-banks` holds research inputs and their checksums;
+`reveals/2023-banks` holds outcomes and separate checksums. `validate` does not
+locate, read, or hash the reveal. `demo` requires both paths and the explicit
+evaluation time; it rejects evaluation before the reveal gate without reading
+outcome bytes. The packaged equivalent is
+`oms example 2023-banks --output build/example`.
 
-The bundled `cases/2023-banks` case is a **synthetic teaching fixture**, not a
-historical reconstruction. Every number, identifier, claim, prediction, and
-outcome was invented to test the software. It requires no network connection,
-data-provider account, or AI key.
+A successful demo produces nine audit outputs:
 
-A successful demo produces these nine audit outputs:
-
-- `artifact_manifest.json` — independent research and reveal integrity records;
+- `artifact_manifest.json` — research and reveal integrity records;
 - `snapshot.json` — eligible pre-reveal plaintext and deterministic audit roots;
-- `observations.jsonl` — observations eligible at the information cutoff;
-- `quarantine.jsonl` — ineligible observations and their rejection reasons;
-- `claims.jsonl` — claims whose timestamps and evidence closure are eligible;
-- `rejected_claims.jsonl` — rejected claims and their evidence diagnostics;
-- `predictions.jsonl` — predictions eligible for post-reveal scoring;
-- `scores.json` — reveal-gated Brier scores and binary log loss; and
-- `report.md` — a human-readable summary of the actual audit counts, quarantine
-  and claim/prediction rejection reasons, and scoring results, carrying the
-  synthetic-fixture warning for synthetic cases.
+- `observations.jsonl` — eligible observations;
+- `quarantine.jsonl` — ineligible observations and their reasons;
+- `claims.jsonl` — eligible claims;
+- `rejected_claims.jsonl` — rejected claims and their reasons;
+- `predictions.jsonl` — predictions eligible for scoring;
+- `scores.json` — gated Brier scores and binary log loss; and
+- `report.md` — actual audit counts, rejection reasons, and scoring results.
 
-The directory also contains `.openmacrostate-output.json`, an ownership marker
-used to recognize a generated directory. It is operational metadata, not a
-tenth audit output.
+The directory also contains `.openmacrostate-output.json`, an ownership marker.
+The demo refuses existing outputs by default. Its separate `--force` option
+allows only an empty directory or a marked output for the same case, never an
+input bundle. The brief command has no equivalent overwrite option.
 
-The safe default is no overwrite: even a previous demo directory causes the
-command to stop. For a deliberate repeat, append `--force`. Forced replacement
-is accepted only for an empty directory or a marked output for the same case;
-the command rejects unmarked non-empty directories, another case's marker,
-input-bundle overlap, and unsafe generated-file links. `--force` never authorizes
-writing into either the research or reveal bundle.
+For a machine-readable validation result, use
+`oms validate cases/2023-banks --json`. To save the eligible research snapshot,
+use `oms validate cases/2023-banks --snapshot build/research-snapshot.json`.
+Keep quarantine and rejection diagnostics out of an analysis process: their
+future metadata is not part of the eligible research view.
 
-Treat the machine-readable outputs as the audit record and `report.md` as a
-derived view. Nothing in this fixture supports an inference about the real 2023
-banking system.
+## Understand the time boundary
 
-## Verify the installation
+The research model separates observation, release, vintage, ingestion, and
+research cutoff. Observation dates alone cannot establish when a version was
+available. Current official-source captures use conservative core capture or
+replay times for availability; an old date in a URL or recording is insufficient
+historical proof.
+
+The synthetic demo exercises `retrospective_authenticated` with an explicitly
+invented proof. Real late-ingested evidence remains ineligible until a reviewed
+historical authentication path is available. The brief leaves that boundary
+unchanged. Read the [research contract](research-contract.md) for the full
+five-time model and [connector contract](connectors.md) for capture semantics.
+
+## Contributor setup
+
+For editing the source and running the checks, install the development extras:
 
 ```bash
+python -m pip install -e '.[dev]'
 python -m ruff check .
 pytest
 ```
 
-If the command fails, include the exact command, Python version, operating system,
-and complete redacted error in a bug report. Do not post credentials, restricted
-data, or undisclosed vulnerabilities publicly.
+If a command fails, include the command, Python version, operating system, and
+redacted error in a bug report. Useful next reading:
 
-## Next steps
-
-- Read the [connector contract](connectors.md) before recording or proposing an
-  official source. Network capture must be explicit and a later retrieval cannot
-  be backdated into an earlier replay.
-- Read the [research contract](research-contract.md) before creating a case or
-  connector.
-- Read the [data-license policy](data-licensing.md) before adding source material.
-- Choose a contribution lane in [CONTRIBUTING.md](../CONTRIBUTING.md).
+- [H.4.1 brief guide](h41-brief.md)
+- [Connector trust and capture contract](connectors.md)
+- [Data licensing](data-licensing.md)
+- [Contribution guide](../CONTRIBUTING.md)

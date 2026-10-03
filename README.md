@@ -5,381 +5,239 @@
 [![Code/docs: Apache-2.0](https://img.shields.io/badge/code%20%26%20docs-Apache--2.0-blue.svg)](LICENSE)
 [![Pre-release: v0.1.0a6](https://img.shields.io/badge/pre--release-v0.1.0a6-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6)
 
-**An auditable, point-in-time operating system for global macro research.**
+**Turn Federal Reserve H.4.1 releases into research briefs with traceable sources.**
 
-OpenMacroState is building a way for researchers to reconstruct what could have
-been known at a historical cutoff, connect evidence to explicit mechanisms,
-record falsifiable claims, and score those claims after outcomes arrive.
+Prepare the numbers for a balance-sheet note: seven reported values, a comparison
+with a previous capture, and the source records behind them. OpenMacroState
+produces a page you can open locally, a table you can copy into a spreadsheet,
+and Markdown and CSV exports. Each brief checks the preserved source bytes and
+the accounting identity before presenting the data.
 
-> Replay what the world knew, not what history later revised.
+Start with one H.4.1 capture. Add a previous capture when you want differences;
+the brief distinguishes a new observation period from changes between captures
+of the same period. Values remain in the source's `USD_million` unit.
 
-## The value in 30 seconds
+![H.4.1 research brief — test excerpt preview](docs/images/h41-brief.png)
 
-OpenMacroState turns exact source bytes into a research record that can answer
-four questions later: **what was available, when was it available, which claim
-used it, and how did the claim score?**
+*Offline test-excerpt preview; not an authenticated historical release.*
 
-It does this without asking an AI model to remember the boundary:
+## Try an H.4.1 brief
 
-1. freeze a core-observed official response or separately recorded bytes;
-2. hash it and preserve its retrieval metadata without treating a self-reported
-   receipt time as historical proof;
-3. normalize observations with five distinct time fields;
-4. reject evidence that was not eligible at the research cutoff; and
-5. keep later outcomes in a separate reveal bundle until scoring is allowed.
-
-```mermaid
-flowchart LR
-    A["Official source<br/>or recorded response"] --> B["Core-owned transport<br/>and SHA-256 freeze"]
-    B --> C["Review-trusted<br/>built-in connector"]
-    C --> D["Five-clock<br/>observations"]
-    D --> E["Cutoff and<br/>evidence closure"]
-    E --> F["Frozen research<br/>snapshot"]
-    G["Physically separate<br/>reveal bundle"] --> H["Post-resolution<br/>scoring"]
-    F --> H
-```
-
-OpenMacroState is not another chart terminal and does not claim to predict
-markets. Its first three official-source pre-alpha vertical slices are the New
-York Fed SOFR connector, `frbny-sofr`, the U.S. Treasury Debt to the Penny
-connector, `treasury-debt-to-penny`, and the Federal Reserve Board dated H.4.1
-connector, `fed-h41-release`. All are deliberately conservative:
-historical values retrieved today do not become evidence that the system had
-captured them in the past. Replaying a recording with an old `retrieved_at`
-claim does not restore past availability either: without an authenticated proof,
-the core uses the current replay time for eligibility. See the
-[connector contract](docs/connectors.md).
-
-## Project status
-
-OpenMacroState is in **pre-alpha development**. Interfaces, schemas, and bundled
-cases may change before the first stable release. Today the repository provides
-a public research contract, versioned interchange schemas, public plugin
-protocols, an executable offline validator/demo, and three pre-alpha
-official-source capture paths. It also includes one fixed experimental H.4.1
-accounting audit and a read-only trace from derived values back to their accepted
-observations and preserved artifact. This is not yet a general or stable
-state-graph interface.
-These connectors are not stable historical evidence packs. The repository still
-does **not** ship a production model adapter or a reviewed real historical replay,
-and it is not a production trading or policy system.
-
-The current public pre-release is [v0.1.0a6](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6).
-Its wheel and source archive are available from GitHub Releases only;
-OpenMacroState has not been published to PyPI. To help shape the next milestone,
-review the Draft [2023 banking-stress replay RFC](https://github.com/alainresearch/OpenMacroState/pull/18)
-or claim the scoped [`inspect-recording` good first issue](https://github.com/alainresearch/OpenMacroState/issues/14).
-
-## Five-minute synthetic demo
-
-Python 3.10 or newer is recommended.
+Use Python 3.10 or newer and a checkout of the repository:
 
 ```bash
-git clone https://github.com/alainresearch/openmacrostate.git
-cd openmacrostate
-python -m pip install -e '.[dev]'
-
-openmacrostate validate cases/2023-banks
-openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
+git clone https://github.com/alainresearch/OpenMacroState.git
+cd OpenMacroState
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install .
 ```
 
-A wheel built from the repository also carries this small fixture, so its
-shortest smoke test is:
+On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`.
+These instructions describe the **development version in the repository**.
+The latest GitHub pre-release, [v0.1.0a6](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6),
+does not include the brief command. OpenMacroState is not published to PyPI.
 
-```bash
-openmacrostate example 2023-banks --output build/example
-```
-
-`cases/2023-banks` is a **synthetic teaching fixture**: every value is invented,
-and its date-shaped scenario is not evidence about any real bank or historical
-event. It exists to test cutoff enforcement, transitive evidence rejection, and
-reveal-gated scoring without a network connection, AI provider, or API key.
-
-The prediction-time research bundle under `cases/` and the post-resolution
-reveal bundle under `reveals/` are physically separate and have independent
-integrity manifests. `validate` reads only the research bundle; it neither needs
-nor reads a reveal. `demo` requires both paths and an explicit evaluation time.
-Existing output paths are refused by default; use `--force` only to replace an
-empty directory or a marked prior output for the same case.
-
-Run lint and the full test suite with:
-
-```bash
-python -m ruff check .
-pytest
-```
-
-See the [quickstart](docs/quickstart.md) for the expected artifacts and common
-troubleshooting steps.
-
-## Official-source captures
-
-The built-in `frbny-sofr` connector exercises the full acquisition boundary
-without making network access implicit:
+Create your first brief entirely offline:
 
 ```bash
 mkdir -p build
-openmacrostate connector capture frbny-sofr \
-  --start 2023-03-22 --end 2023-03-22 \
-  --recording tests/fixtures/connectors/frbny_sofr/recording.json \
-  --output build/frbny-sofr
-openmacrostate validate build/frbny-sofr
-```
-
-This offline fixture produces six normalized observations and a case bundle
-with eight checksummed research files. Its bytes and manifest are reproducible,
-but its source and receipt time remain explicitly unverified. Use `--online`
-instead of `--recording` only when you intentionally want the core to make one
-allowlisted HTTPS request. Live capture is labeled `core_observed_https`; that
-is a local acquisition record, not a signed historical timestamp or a causal
-claim. See the [connector contract](docs/connectors.md).
-
-The second built-in connector captures total U.S. public debt outstanding from
-Treasury Fiscal Data's Debt to the Penny endpoint:
-
-```bash
-openmacrostate connector capture treasury-debt-to-penny \
-  --start 2026-08-05 --end 2026-08-06 \
-  --recording tests/fixtures/connectors/treasury_debt_to_penny/recording.json \
-  --output build/treasury-debt-to-penny
-openmacrostate validate build/treasury-debt-to-penny
-```
-
-This reserialized `test_only_excerpt` contains real Treasury values and produces
-two normalized `treasury.debt.total_public_outstanding` observations. It is an
-offline parser and provenance fixture, not exact original wire bytes and not an
-authenticated 2026 historical vintage. The live connector fixes the official
-host, selected fields, encoded date filter, ascending sort, JSON format, and a
-single bounded page; it rejects empty, truncated, same-day, future, malformed,
-or out-of-order results.
-
-The third connector captures one dated Federal Reserve Board H.4.1 balance-sheet
-release. Equal start and end values identify the release artifact:
-
-```bash
-openmacrostate connector capture fed-h41-release \
+oms connector capture fed-h41-release \
   --start 2023-03-16 --end 2023-03-16 \
   --recording tests/fixtures/connectors/fed_h41_release/recording.json \
-  --output build/fed-h41-release
-openmacrostate validate build/fed-h41-release
+  --output build/h41-capture \
+  --brief-output build/h41-brief
 ```
 
-The fixture produces seven `USD_million` Wednesday observations: total assets,
-total liabilities, total capital, securities held outright, primary credit, the
-Treasury General Account, and reserve balances. It is a small
-`test_only_excerpt`, not the full official page or an authenticated 2023 vintage.
-The parser selects exact semantic rows and the Wednesday stock column rather than
-a table position, and it rejects date, unit, column, row, number, and DOM drift.
+Open `build/h41-brief/index.html` in your browser. The bundled recording is a
+**`test_only_excerpt`** containing seven reported H.4.1 values; the page labels
+it accordingly. It demonstrates the workflow without a network connection or AI
+key and does not authenticate a 2023 historical version.
 
-The first experimental accounting rule then checks the three Table 5 totals at
-the same source, artifact, unit, and observation time:
+| Output | Use it for |
+| --- | --- |
+| `index.html` | Inspect the seven values, copy the table, and open source/audit details |
+| `observations.csv` | Bring the values and any comparison into a spreadsheet |
+| `brief.md` | Start a research note with the numbers and source record attached |
+| `brief.json` | Inspect the experimental machine-readable report |
+
+The seven values are total assets, total liabilities, total capital, securities
+held outright, primary credit, the Treasury General Account, and reserve
+balances. A single capture displays the values without inventing a change.
+
+Continue with the [quickstart](docs/quickstart.md) or the
+[H.4.1 brief guide](docs/h41-brief.md) for comparisons, explicit online capture,
+and the exact checks performed. Use a fresh output directory when repeating
+these examples.
+
+## Captures you can inspect later
+
+Three built-in connectors preserve official-source responses and normalize
+bounded sets of observations:
+
+| Connector | What it captures |
+| --- | --- |
+| `fed-h41-release` | Seven Wednesday stock values from one dated Federal Reserve H.4.1 release |
+| `frbny-sofr` | The New York Fed's SOFR rate and available volume/percentile data |
+| `treasury-debt-to-penny` | Treasury Fiscal Data's total public debt outstanding |
+
+Discover them offline with `oms connector list`. Use `--recording` for local
+replay or explicitly select `--online` for an allowlisted HTTPS request. The
+[connector guide](docs/connectors.md) includes runnable examples for all three.
+The brief workflow currently accepts H.4.1 captures only.
+
+An old date in a source URL does not prove that today's bytes were available on
+that date. Captures preserve what the core retrieved or replayed now; historical
+eligibility remains false without independently reviewed authentication. This
+also applies to a comparison of two dated releases retrieved today. A difference
+between two captures is not, by itself, proof of an official revision.
+
+## Inspect the calculation
+
+The H.4.1 brief uses the same fixed audit as the command below:
 
 ```bash
-oms audit accounting build/fed-h41-release \
+oms audit accounting build/h41-capture \
   --rule fed-h41-balance-sheet-v1 \
   --observed-at 2023-03-15T00:00:00Z
 ```
 
-It tests `assets = liabilities + capital` with a fixed tolerance of exactly
-1 `USD_million` for reported whole-million rounding. It reads values only from
-accepted observations, re-hashes and re-normalizes the preserved local artifact,
-and requires all seven regenerated records to match exactly. This proves local
-derivation, not source acquisition or historical availability, and it does not
-create a stable public accounting schema. See the
-[accounting audit guide](docs/accounting-audit.md) and dedicated
-[H.4.1 source contract](docs/fed-h41-source-contract.md).
+The audit re-hashes and re-normalizes the local artifact, requires all seven
+observations to match, and checks `assets = liabilities + capital` within
+exactly 1 `USD_million` for reported whole-million rounding. The
+[accounting audit guide](docs/accounting-audit.md) explains the checks.
 
-The experimental state trace can then explain one derived value's exact
-arithmetic lineage:
+For a trace of the arithmetic back to its inputs:
 
 ```bash
-oms trace state build/fed-h41-release \
+oms trace state build/h41-capture \
   --rule fed-h41-balance-sheet-v1 \
   --observed-at 2023-03-15T00:00:00Z \
   --target balance_sheet_residual
 ```
 
-`--target all --json` emits the full fixed graph: seven reported facts, six
-derived facts, and twelve explicitly non-causal dependency edges. It inherits
-the audit, snapshot, artifact, parser, time, and authentication hashes, but
-remains a retrospective reconstruction rather than proof of 2023 availability
-or causality. See the [state-trace guide](docs/state-trace.md).
+This [experimental trace](docs/state-trace.md) describes fixed dependencies;
+it does not assert causality or define a stable general state-graph interface.
+The brief's JSON output is also experimental and separate from `schemas/v1`.
 
-## The problem it addresses
+## The longer-term research system
 
-Macro research is unusually vulnerable to hindsight:
+OpenMacroState is building an auditable, point-in-time operating system for
+macro research: preserve evidence, make accounting and mechanisms explicit,
+record falsifiable claims, and evaluate them after outcomes arrive. The current
+brief is a useful entry point into that work.
 
-- economic series are revised after their original release;
-- policy documents, market prices, and balance sheets arrive on different clocks;
-- narrative explanations are often detached from reproducible calculations;
-- failed predictions can quietly disappear or be rewritten; and
-- AI systems can produce fluent conclusions without respecting the historical
-  information boundary.
+The research contract keeps five times separate: observation, release, vintage,
+ingestion, and research cutoff. Source records and exact artifact hashes allow
+later inspection; evidence closure prevents rejected or late information from
+entering an eligible research snapshot. The current official-source connectors
+use conservative core retrieval/replay times rather than inventing historical
+publication timestamps. See the [research contract](docs/research-contract.md)
+and [H.4.1 source contract](docs/fed-h41-source-contract.md).
 
-OpenMacroState makes the information boundary explicit. A replay should answer:
+```mermaid
+flowchart LR
+    A["Official source or local recording"] --> B["Preserved bytes and capture record"]
+    B --> C["Accepted observations and audit"]
+    C --> D["H.4.1 brief and exports"]
+    C --> E["Frozen research snapshot"]
+    F["Separate reveal bundle"] --> G["Gated evaluation"]
+    E --> G
+```
 
-1. What information was actually public at the cutoff?
-2. Which balance sheets or state variables changed?
-3. Through which mechanism could the change propagate?
-4. What competing explanations remain plausible?
-5. Which future observation would weaken or falsify each claim?
-6. What happened, and how should the recorded claim be scored?
+## Explore the synthetic research demo
 
-## Research contract
+The separate `2023-banks` teaching fixture demonstrates cutoff enforcement,
+evidence closure, and post-reveal scoring. Its values, claims, and outcomes are
+invented; it is not a historical banking case.
 
-Every publishable result should be:
+```bash
+oms validate cases/2023-banks
+oms demo cases/2023-banks --reveal reveals/2023-banks \
+  --evaluation-at 2023-03-13T22:00:00Z --output build/demo
+```
 
-- **point-in-time** — later releases and revisions cannot leak into a replay;
-- **auditable** — claims resolve to immutable source artifacts and calculations;
-- **reproducible** — a documented command rebuilds the result;
-- **explicit about uncertainty** — observations, inferences, and forecasts are
-  distinguishable;
-- **mechanism-first** — accounting boundaries and transmission paths are named;
-- **falsifiable** — forward-looking claims include a horizon and evaluation rule.
+The research bundle under `cases/` and outcome bundle under `reveals/` have
+independent manifests. `validate` does not need or read the reveal. A packaged
+installation can also run `oms example 2023-banks --output build/example`.
+See the [quickstart](docs/quickstart.md#synthetic-research-demo) for its outputs.
 
-The core time model keeps five concepts separate: when a value was observed,
-released, vintaged, ingested, and the research information cutoff. Cases also
-declare either `prospective_capture` or `retrospective_authenticated` availability;
-the latter may accept later ingestion only with a verified, pre-cutoff version
-proof bound to the exact source, digest, and publication time. The current
-pre-alpha verifier accepts only the explicitly synthetic fixture proof; real
-late-ingested evidence fails closed. See the
-[research contract](docs/research-contract.md).
+## Project status and contributions
 
-## AI is optional
+OpenMacroState is pre-alpha. The repository has three prospective-capture
+connectors, a deterministic validator and synthetic demo, a fixed H.4.1
+accounting audit and trace, and the H.4.1 brief workflow. It does not yet ship a
+reviewed real historical replay or a production model adapter.
 
-The currently implemented deterministic core—checksum verification, cutoff
-filtering, evidence-closure checks, snapshots, and reveal-gated scoring—works
-without an AI service. AI-assisted components may propose claims, compare
-explanations, or draft prose, but they do not get to:
+The [unscored H.4.1 primary-credit evidence canary, RFC 0001](https://github.com/alainresearch/OpenMacroState/pull/18),
+is Draft and awaits independent evidence, rights, and implementation review.
+Its formal comment window has not started. The broader
+[state-graph RFC](https://github.com/alainresearch/OpenMacroState/pull/25) is
+also Draft and deferred behind that smaller evidence path.
 
-- bypass the replay cutoff;
-- invent or silently replace evidence;
-- modify frozen artifacts;
-- turn an inference into an observation; or
-- publish an unsupported claim as fact.
+Useful contributions include trying a brief in an actual research workflow,
+reporting a reproducible error, reviewing source evidence, and improving
+connectors, tests, documentation, or accessibility. Start with
+[CONTRIBUTING.md](CONTRIBUTING.md) and the [roadmap](ROADMAP.md).
+For development, install the additional tools separately:
 
-The analysis snapshot contains only eligible plaintext. Quarantined values,
-rejected claims, and their future artifact metadata stay in separate validator
-diagnostics and are never part of the view supplied to an AI.
+```bash
+python -m pip install -e '.[dev]'
+python -m ruff check .
+pytest
+```
 
-AI-generated contributions are welcome when they meet the same review, licensing,
-testing, and attribution standards as human-written work.
+AI services are optional. They cannot substitute for source evidence, backdate
+a capture, or change frozen research inputs. The deterministic workflows above
+require no AI service.
 
 ## Project map
 
 ```text
 src/openmacrostate/
-  api/v1/         public value types, errors, and connector/model protocols
-  connectors/     fixed registry of review-trusted built-in connectors
-  runtime/        case loading, cutoff filtering, accounting, state tracing, and scoring
-  cli.py          validation, captures, demos, audits, and experimental trace commands
-schemas/v1/       JSON Schema interchange contracts
-cases/2023-banks/ synthetic offline teaching fixture (not historical evidence)
-reveals/2023-banks/ separate synthetic post-resolution outcome bundle
-contrib/templates/ starter skeletons for future connectors, models, and cases
-tests/            runtime, CLI, and public-schema contract tests
-docs/             research, contribution, and governance documentation
+  api/v1/          public types and connector/model protocols
+  connectors/      fixed registry of reviewed built-in connectors
+  runtime/         evidence validation, accounting, briefs, traces, and scoring
+  cli.py           command-line workflows
+schemas/v1/        versioned interchange contracts
+cases/2023-banks/  synthetic research fixture
+reveals/2023-banks/ separate synthetic outcomes
+contrib/templates/ connector, model, and case starting points
+tests/             runtime, CLI, and contract tests
+docs/              user guides and research/governance contracts
 ```
 
-The connector and model directories under `contrib/templates/` are extension
-templates, not bundled live integrations. Connector execution is fail-closed:
-offline recordings are the reproducible default workflow, live network access
-must be selected explicitly, and arbitrary third-party Python plugins are not
-loaded in this pre-alpha. See [docs/connectors.md](docs/connectors.md).
+## Community, releases, and licensing
 
-## Ways to contribute
+Use [Discussions](https://github.com/alainresearch/OpenMacroState/discussions)
+for questions and design ideas, and [Issues](https://github.com/alainresearch/OpenMacroState/issues)
+for reproducible defects and scoped work. Decisions and ownership follow
+[GOVERNANCE.md](GOVERNANCE.md) and [MAINTAINERS.toml](MAINTAINERS.toml).
 
-You do not need to be both an economist and a software engineer. The main
-contribution lanes are:
+- [Release process](docs/releasing.md)
+- [Security reporting](SECURITY.md)
+- [Project citation](CITATION.cff)
+- [Project charter](PROJECT_CHARTER.md)
 
-- add or repair a public-data connector;
-- build or audit a historical replay case;
-- document a mechanism, accounting boundary, or competing explanation;
-- adapt a model behind the common interface;
-- improve tests, documentation, translations, or accessibility; and
-- reproduce an issue, review evidence, or answer a community question.
-
-Start with [CONTRIBUTING.md](CONTRIBUTING.md). Small fixes may go directly to a
-pull request; substantial changes to the core protocol begin with an RFC. Project
-priorities are described in the [roadmap](ROADMAP.md). Contributors working on
-official sources should also read the [connector contract](docs/connectors.md)
-and [data-license policy](docs/data-licensing.md).
-
-## Community and governance
-
-GitHub Discussions is the canonical, searchable home for questions, ideas, and
-design conversations. GitHub Issues tracks accepted work and defects. Decisions
-made in synchronous chats or meetings must be summarized back to GitHub.
-
-OpenMacroState uses a public contributor ladder:
-
-```text
-Contributor -> Reviewer -> Module Maintainer -> Steering Council
-```
-
-Responsibilities, promotion criteria, decision rules, and succession are defined
-in [GOVERNANCE.md](GOVERNANCE.md). Current ownership is recorded in
-[MAINTAINERS.toml](MAINTAINERS.toml).
-
-## Releases, security, and citation
-
-- Release policy: [docs/releasing.md](docs/releasing.md)
-- Security reporting: [SECURITY.md](SECURITY.md)
-- Project citation: [CITATION.cff](CITATION.cff)
-- Project charter: [PROJECT_CHARTER.md](PROJECT_CHARTER.md)
-
-## Licensing
-
-Project code and repository-authored documentation are licensed under the
-[Apache License 2.0](LICENSE), unless a file states otherwise.
-
-**That license does not automatically apply to downloaded or bundled data.** Each
-connector, research case, and reveal bundle must identify source terms,
-redistribution status, and required attribution. Data without clear
-redistribution permission must be fetched from its source or represented by a
-small synthetic fixture. See
-[docs/data-licensing.md](docs/data-licensing.md) and [NOTICE](NOTICE).
-
-OpenMacroState provides research infrastructure, not investment, legal, or policy
-advice. Source data can be incomplete, revised, delayed, or wrong.
-
----
+Repository code and authored documentation use [Apache-2.0](LICENSE). External
+data retains its own terms, attribution, and redistribution limits; a brief
+export does not grant permission to redistribute raw source material. See the
+[data-license policy](docs/data-licensing.md) and [NOTICE](NOTICE).
 
 ## 中文快速介绍
 
-**OpenMacroState 是一个可审计、可回到历史当时的全球宏观研究操作系统。**
+**把美联储 H.4.1 发布页里的七项数据，整理成可查来源、可复制到研究笔记的简报。**
 
-它不是另一个行情终端，也不承诺“AI 预测市场”。它首先解决一个更基础的
-问题：在某个历史时点，研究者当时究竟能够知道什么？项目把证据的观测时间、
-发布时间、版本时间、采集时间和研究截止时间分开，并把结论连接到来源与可证伪
-条件。
+先运行上面的离线示例，再打开 `build/h41-brief/index.html`。你可以查看数值、
+复制表格，或下载 CSV 和 Markdown。提供前一份采集包后，还能比较差额；页面会
+区分“新的观测期”和“同一观测期的两次采集有差异”。所有金额沿用原表的百万美元
+单位。
 
-当前内置的 `2023-banks` 只是**合成教学夹具**：所有数值均为虚构，用来检验
-时间截止、证据传递拒绝和事后评分，不构成任何真实银行或历史事件的证据。
-它不依赖 AI 或 API Key；AI 只能作为可选分析层，不能越过时间边界，也不能
-替代证据。研究包位于 `cases/`，事后揭晓包位于 `reveals/`，二者各自拥有完整性
-清单；`validate` 完全不读取揭晓包。代码采用 Apache-2.0，外部数据仍遵守各自
-许可证。
+示例使用 `test_only_excerpt` 测试节选。今天抓到旧日期的发布页，只能说明今天
+拿到了这些字节，不能证明它们在当年已经可得。当前仓库版本包含简报命令，GitHub
+预发布版 `v0.1.0a6` 尚不包含；请按上方步骤从仓库安装，普通使用无需安装开发依赖。
 
-首批三个官方数据纵向切片已经落地：纽约联储 SOFR 连接器 `frbny-sofr`、
-美国财政部总公共债务连接器 `treasury-debt-to-penny`，以及美联储 H.4.1
-带日期发布页连接器 `fed-h41-release`。三者都采用保守时间规则：今天抓取到的
-历史值，不会被倒填成系统在当年已经捕获的证据。H.4.1 还提供首个实验性会计
-校验，用固定 100 万美元容差核对“总资产 = 总负债 + 总资本”，但尚未形成稳定
-会计 schema 或通用状态图。新的实验性 state trace 可以把会计派生值逐步追溯到
-七条合格观测、原始材料哈希和解析规则；所有边都明确标为非因果，也不会把今天
-的重算冒充成 2023 年已经知道的结论。详见 [Connector 契约](docs/connectors.md)、
-[会计校验说明](docs/accounting-audit.md)与[状态追溯说明](docs/state-trace.md)。
-
-快速运行：
-
-```bash
-python -m pip install -e '.[dev]'
-openmacrostate validate cases/2023-banks
-openmacrostate demo cases/2023-banks --reveal reveals/2023-banks --evaluation-at 2023-03-13T22:00:00Z --output build/demo
-```
-
-欢迎贡献数据连接器、历史案例、宏观机制、模型适配器、测试、文档和中文内容。
-详细说明见[中文项目介绍](docs/zh-CN/README.md)与
-[贡献指南](CONTRIBUTING.md)。
+项目的长期方向仍是可审计的宏观研究系统：保存来源记录，分清五种时间，把研究
+输入与事后结果分开。入门见[快速开始](docs/quickstart.md)和
+[H.4.1 简报指南](docs/h41-brief.md)；研究契约和贡献方式见
+[文档目录](docs/index.md)与[贡献指南](CONTRIBUTING.md)。
