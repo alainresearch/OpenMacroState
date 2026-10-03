@@ -335,6 +335,9 @@ sealed evidence, recast a failed gate as success, or alter the synthetic fixture
 
 ## Unresolved questions
 
+The [review packet](0001-review-packet.md) maps these questions to evidence
+entry points, missing preparation material, and scoped review records.
+
 - Which independent reviewers will cover macro interpretation, provenance/time,
   rights, and the implementation's security boundary?
 - Which archive authority and exact payload-binding method meet the required
