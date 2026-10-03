@@ -10,8 +10,8 @@ compare two captures, and export a table with its source record.
 - [Connector guide: H.4.1, SOFR, and Treasury captures](connectors.md)
 - [Synthetic research demo](quickstart.md#synthetic-research-demo)
 
-The brief command is part of the repository's development version and is not in
-the latest GitHub pre-release, `v0.1.0a6`. Follow the source-install instructions
+The brief command is included in the `v0.1.0a7` GitHub pre-release. Follow the
+source-install instructions
 in the quickstart. No AI service is required.
 
 ## Inspect evidence and calculations

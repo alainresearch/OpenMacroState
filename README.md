@@ -3,7 +3,7 @@
 [![CI](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml/badge.svg)](https://github.com/alainresearch/OpenMacroState/actions/workflows/ci.yml)
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue.svg)](https://www.python.org/)
 [![Code/docs: Apache-2.0](https://img.shields.io/badge/code%20%26%20docs-Apache--2.0-blue.svg)](LICENSE)
-[![Pre-release: v0.1.0a6](https://img.shields.io/badge/pre--release-v0.1.0a6-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6)
+[![Pre-release: v0.1.0a7](https://img.shields.io/badge/pre--release-v0.1.0a7-orange.svg)](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a7)
 
 **Turn Federal Reserve H.4.1 releases into research briefs with traceable sources.**
 
@@ -34,9 +34,17 @@ python -m pip install .
 ```
 
 On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`.
-These instructions describe the **development version in the repository**.
-The latest GitHub pre-release, [v0.1.0a6](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6),
-does not include the brief command. OpenMacroState is not published to PyPI.
+The [v0.1.0a7 GitHub pre-release](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a7)
+includes the brief workflow. If you only need the installed CLI, you can use its
+wheel in an isolated environment instead of cloning the repository:
+
+```bash
+python -m pip install "https://github.com/alainresearch/OpenMacroState/releases/download/v0.1.0a7/openmacrostate-0.1.0a7-py3-none-any.whl"
+```
+
+The offline H.4.1 example below uses the fixture files in the repository or
+source archive; wheel-only users can follow the [explicit online example](docs/quickstart.md#explicit-online-capture).
+OpenMacroState is not published to PyPI.
 
 Create your first brief entirely offline:
 
@@ -235,7 +243,8 @@ export does not grant permission to redistribute raw source material. See the
 
 示例使用 `test_only_excerpt` 测试节选。今天抓到旧日期的发布页，只能说明今天
 拿到了这些字节，不能证明它们在当年已经可得。当前仓库版本包含简报命令，GitHub
-预发布版 `v0.1.0a6` 尚不包含；请按上方步骤从仓库安装，普通使用无需安装开发依赖。
+预发布版 `v0.1.0a7` 已包含；可安装 GitHub Release 的 wheel，或按上方步骤从仓库安装。
+普通使用无需安装开发依赖；离线 H.4.1 演示夹具位于仓库和源码包中。
 
 项目的长期方向仍是可审计的宏观研究系统：保存来源记录，分清五种时间，把研究
 输入与事后结果分开。入门见[快速开始](docs/quickstart.md)和

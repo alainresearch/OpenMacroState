@@ -4,6 +4,8 @@ message: >-
   individual replay cases, datasets, and upstream sources you relied on.
 title: OpenMacroState
 type: software
+version: 0.1.0a7
+date-released: '2026-10-03'
 abstract: >-
   An auditable, point-in-time operating system for global macro research,
   historical replay, evidence provenance, mechanism analysis, and prediction
