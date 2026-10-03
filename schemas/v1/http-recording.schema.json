@@ -41,7 +41,7 @@
           }
         },
         "retrieved_at": {"type": "string", "format": "date-time"},
-        "body_file": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+        "body_file": {"type": "string", "pattern": "^(?![/\\\\])(?!.*(?:^|[/\\\\])\\.\\.(?:[/\\\\]|$))(?!.*\\u0000).+"},
         "byte_length": {"type": "integer", "minimum": 0},
         "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
       }
