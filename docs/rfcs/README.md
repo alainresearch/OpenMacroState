@@ -4,6 +4,16 @@ RFCs are durable design records for changes that affect the research contract,
 public schemas, compatibility, security boundaries, licensing policy, governance,
 or another project-wide and difficult-to-reverse decision.
 
+## Active proposals
+
+- [RFC 0002: First-class macro state graph and derived-value lineage](0002-macro-state-graph-lineage.md)
+  — Draft; defines the semantic boundary for a future stable state graph while
+  permitting only a reversible experimental H.4.1 trace during review.
+
+RFC 0001, the evidence-reviewed 2023 US banking-stress replay, is under review in
+[Draft PR #18](https://github.com/alainresearch/OpenMacroState/pull/18). It is
+listed here by public review reference until that proposal is merged or closed.
+
 ## Lifecycle
 
 1. Discuss an early idea in GitHub Discussions when useful.
