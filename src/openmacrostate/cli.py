@@ -179,7 +179,7 @@ def _report(evaluation: CaseEvaluation, scoring: Mapping[str, Any]) -> str:
     summary = evaluation.summary()
     quarantine_rows = (
         "\n".join(
-            f"- `{record['observation_id']}` — {record['quarantine']['primary_reason']}"
+            f"- `{record['observation_id']}` — {', '.join(record['quarantine']['reasons'])}"
             for record in evaluation.quarantined_observations
         )
         or "- None"
@@ -191,6 +191,23 @@ def _report(evaluation: CaseEvaluation, scoring: Mapping[str, Any]) -> str:
         )
         or "- None"
     )
+    rejected_prediction_rows = (
+        "\n".join(
+            f"- `{record['prediction_id']}` — {', '.join(record['rejection']['reasons'])}"
+            for record in evaluation.rejected_predictions
+        )
+        or "- None"
+    )
+    if (
+        evaluation.quarantined_observations
+        or evaluation.rejected_claims
+        or evaluation.rejected_predictions
+    ):
+        exclusion_note = "The excluded records and their validator reasons are listed above."
+    else:
+        exclusion_note = (
+            "This run quarantined no observations and rejected no claims or predictions."
+        )
     score_lines = []
     for score in scoring["scores"]:
         log_loss = score["binary_log_loss"]
@@ -237,6 +254,10 @@ def _report(evaluation: CaseEvaluation, scoring: Mapping[str, Any]) -> str:
 
 {rejected_claim_rows}
 
+### Rejected predictions
+
+{rejected_prediction_rows}
+
 ## Post-reveal scoring
 
 - Evaluation time: `{scoring["evaluation_at"]}`
@@ -247,12 +268,12 @@ def _report(evaluation: CaseEvaluation, scoring: Mapping[str, Any]) -> str:
 
 ## Interpretation
 
-The deliberately late observation was excluded because its release and vintage
-timestamps are after the cutoff. Authenticated retrospective ingestion may occur
-later than the historical cutoff; ingestion time alone does not rewrite public
-availability. The claim depending on the late record was rejected transitively.
-The outcome bundle was supplied and verified only after pre-reveal selection had
-completed and the declared reveal time had passed. {interpretation_tail}
+Only accepted observations, claims, and predictions appear in the analysis snapshot.
+{exclusion_note}
+
+Scoring used the separately supplied, verified reveal bundle after pre-reveal
+selection. The declared evaluation time passed the reveal and outcome availability
+checks. {interpretation_tail}
 """
 
 
