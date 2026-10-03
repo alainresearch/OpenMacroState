@@ -75,8 +75,10 @@ jobs:
         run: python -m build
       - name: Smoke-test the built wheel outside the checkout
         run: |
+          unset PYTHONPATH PYTHONHOME
           python -m venv build/wheel-smoke
           build/wheel-smoke/bin/python -m pip install dist/*.whl
+          build/wheel-smoke/bin/python -m pip check
           pushd "$RUNNER_TEMP"
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" example 2023-banks --output wheel-demo
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" connector capture --help
@@ -93,8 +95,11 @@ jobs:
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" connector capture fed-h41-release \
             --start 2023-03-16 --end 2023-03-16 \
             --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/fed_h41_release/recording.json" \
-            --output wheel-h41
+            --output wheel-h41 \
+            --brief-output wheel-h41-brief
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" validate wheel-h41
+          "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" brief h41 wheel-h41 \
+            --previous wheel-h41 --output wheel-h41-comparison
           "$GITHUB_WORKSPACE/build/wheel-smoke/bin/openmacrostate" audit accounting wheel-h41 \
             --rule fed-h41-balance-sheet-v1 \
             --observed-at 2023-03-15T00:00:00Z \
@@ -122,17 +127,27 @@ jobs:
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/tests/fixtures/connectors/fed_h41_release/response.html'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/src/openmacrostate/runtime/state_trace.py'
           tar -tzf dist/openmacrostate-*.tar.gz | grep '/docs/state-trace.md'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/src/openmacrostate/runtime/brief.py'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/src/openmacrostate/runtime/brief_export.py'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/src/openmacrostate/runtime/brief_render.py'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/docs/h41-brief.md'
+          tar -tzf dist/openmacrostate-*.tar.gz | grep '/docs/images/h41-brief.png'
       - name: Smoke-test the source distribution outside the checkout
         run: |
+          unset PYTHONPATH PYTHONHOME
           python -m venv build/sdist-smoke
           build/sdist-smoke/bin/python -m pip install dist/*.tar.gz
+          build/sdist-smoke/bin/python -m pip check
           pushd "$RUNNER_TEMP"
           "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" example 2023-banks --output sdist-demo
           "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" connector capture fed-h41-release \
             --start 2023-03-16 --end 2023-03-16 \
             --recording "$GITHUB_WORKSPACE/tests/fixtures/connectors/fed_h41_release/recording.json" \
-            --output sdist-h41
+            --output sdist-h41 \
+            --brief-output sdist-h41-brief
           "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" validate sdist-h41
+          "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" brief h41 sdist-h41 \
+            --previous sdist-h41 --output sdist-h41-comparison
           "$GITHUB_WORKSPACE/build/sdist-smoke/bin/openmacrostate" audit accounting sdist-h41 \
             --rule fed-h41-balance-sheet-v1 \
             --observed-at 2023-03-15T00:00:00Z \
@@ -145,6 +160,34 @@ jobs:
           test -f sdist-demo/snapshot.json
           test -f sdist-h41/collection.json
           popd
+      - name: Verify brief exports from both distributions
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          expected = {"index.html", "observations.csv", "brief.md", "brief.json"}
+          for prefix in ("wheel", "sdist"):
+              for suffix in ("brief", "comparison"):
+                  directory = root / f"{prefix}-h41-{suffix}"
+                  assert {path.name for path in directory.iterdir()} == expected
+                  report = json.loads((directory / "brief.json").read_text())
+                  assert report["passed"] is True
+                  assert report["historical_version_authenticated"] is False
+                  assert report["current"]["recording_kind"] == "test_only_excerpt"
+                  assert len(report["rows"]) == 7
+                  if suffix == "comparison":
+                      assert report["comparison"]["kind"] == "identical"
+                      assert all(row["delta"] == "0" for row in report["rows"])
+                  with (directory / "observations.csv").open(newline="") as handle:
+                      rows = list(csv.DictReader(handle))
+                  assert len(rows) == 7
+                  assert all(row["current_recording_kind"] == "test_only_excerpt" for row in rows)
+                  assert "Test excerpt" in (directory / "index.html").read_text()
+          PY
       - name: Upload candidate distributions
         uses: actions/upload-artifact@v7
         with:

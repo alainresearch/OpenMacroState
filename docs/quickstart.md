@@ -6,9 +6,8 @@ browser. The first example runs offline after installation.
 ## Install the repository version
 
 Use Python 3.10 or newer, Git, and an isolated virtual environment. The brief
-workflow is available in the repository's development version;
-[GitHub pre-release v0.1.0a6](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a6)
-does not include it. OpenMacroState is not published to PyPI.
+workflow is included in [GitHub pre-release v0.1.0a7](https://github.com/alainresearch/OpenMacroState/releases/tag/v0.1.0a7)
+and the repository. OpenMacroState is not published to PyPI.
 
 ```bash
 git clone https://github.com/alainresearch/OpenMacroState.git
@@ -24,6 +23,20 @@ syntax if entering a multiline command.
 
 Developer tools are optional for ordinary use. The [contributor setup](#contributor-setup)
 installs them separately.
+
+### Install the release wheel instead
+
+In an isolated Python environment, install the published wheel directly:
+
+```bash
+python -m pip install "https://github.com/alainresearch/OpenMacroState/releases/download/v0.1.0a7/openmacrostate-0.1.0a7-py3-none-any.whl"
+oms --version
+```
+
+This installs the CLI without development tools. The H.4.1 offline recording
+used below lives in the repository and the source archive, not inside the wheel.
+Wheel-only users can start with the [explicit online capture](#explicit-online-capture),
+or run `oms example 2023-banks --output example` for the bundled synthetic demo.
 
 ## Make your first brief
 

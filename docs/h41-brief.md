@@ -5,7 +5,7 @@ two saved captures, and take the numbers into a spreadsheet or research note.
 The HTML page, CSV, and Markdown retain the source and capture context needed
 to check the result later. No AI service is involved.
 
-This command is in the repository's development version, after `v0.1.0a6`.
+This command is included in the `v0.1.0a7` GitHub pre-release and the repository.
 Follow the [source-install quickstart](quickstart.md#install-the-repository-version).
 The JSON report is an experimental sidecar, separate from `schemas/v1`.
 
@@ -147,7 +147,7 @@ material; report generation does not expand source rights.
 
 | Symptom | Next step |
 | --- | --- |
-| `brief` is not recognized | Install the current repository checkout with `python -m pip install .`; the `v0.1.0a6` release predates this command |
+| `brief` is not recognized | Upgrade to the `v0.1.0a7` GitHub release wheel or install the current checkout with `python -m pip install .`; `v0.1.0a6` predates this command |
 | Output exists or its parent is missing | Create the parent directory, then choose a new brief path |
 | A capture fails validation or replay | Inspect the capture error and original files; acquire/replay a fresh valid bundle rather than editing sealed observations |
 | The previous capture is later than the current one | Check the observation dates; for the same observation date, also check that previous ingestion is no later than current ingestion |
